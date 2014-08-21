@@ -30,6 +30,10 @@ Testing library for web applications. You can test web application based on serv
 		res.assertContentEquals("+++{\"name\":\"hoge\"}+++");
 	}
 
+## Install with maven
+
+See http://tokuhirom.github.io/maven/
+
 ## DEPENDENCIES
 
   * jetty
