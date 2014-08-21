@@ -13,10 +13,10 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
  * @author tokuhirom
  *
  */
-public class TestMechServlet extends TestMech {
+public class TestMechJettyServlet extends TestMech {
 	private Server server;
 
-	public TestMechServlet(Class<? extends Servlet> servlet) {
+	public TestMechJettyServlet(Class<? extends Servlet> servlet) {
 		try {
 			this.server = createServer(servlet);
 			this.server.start();

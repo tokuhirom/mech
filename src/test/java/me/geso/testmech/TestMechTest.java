@@ -71,7 +71,7 @@ public class TestMechTest {
 
 	@Test
 	public void testRoot() {
-		TestMechServlet mech = new TestMechServlet(Servlet.class);
+		TestMechJettyServlet mech = new TestMechJettyServlet(Servlet.class);
 		TestMechResponse res = mech.get("/").execute();
 		res.assertSuccess();
 		res.assertContentContains("heheh");
@@ -79,7 +79,7 @@ public class TestMechTest {
 
 	@Test
 	public void testHoge() {
-		TestMechServlet mech = new TestMechServlet(Servlet.class);
+		TestMechJettyServlet mech = new TestMechJettyServlet(Servlet.class);
 		TestMechResponse res = mech.get("/hogehoge").execute();
 		res.assertSuccess();
 		res.assertStatusEquals(200);
@@ -89,7 +89,7 @@ public class TestMechTest {
 	@Test
 	public void testJson() {
 		Form form = new Form("hoge");
-		TestMechServlet mech = new TestMechServlet(Servlet.class);
+		TestMechJettyServlet mech = new TestMechJettyServlet(Servlet.class);
 		TestMechResponse res = mech.postJSON("/json", form).execute();
 		res.assertSuccess();
 		res.assertContentEquals("+++{\"name\":\"hoge\"}+++");
