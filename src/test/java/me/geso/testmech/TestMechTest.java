@@ -1,9 +1,6 @@
 package me.geso.testmech;
 
-import static org.junit.Assert.*;
-
 import java.io.IOException;
-import java.nio.charset.Charset;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
@@ -13,7 +10,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.http.util.ByteArrayBuffer;
 import org.junit.Test;
 
 public class TestMechTest {
@@ -27,7 +23,7 @@ public class TestMechTest {
 			HttpServletResponse res = (HttpServletResponse) sres;
 			switch (req.getPathInfo()) {
 			case "/":
-				res.setContentType("text/plain");
+				res.setContentType("text/plain; charset=UTF-8");
 				res.getWriter().write("heheh");
 				break;
 			case "/hogehoge":
@@ -74,6 +70,7 @@ public class TestMechTest {
 		TestMechJettyServlet mech = new TestMechJettyServlet(Servlet.class);
 		TestMechResponse res = mech.get("/").execute();
 		res.assertSuccess();
+		res.assertContentTypeEquals("text/plain; charset=UTF-8");
 		res.assertContentContains("heheh");
 	}
 

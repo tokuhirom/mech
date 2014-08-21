@@ -77,6 +77,10 @@ public class TestMechResponse {
 		Assert.assertThat(this.getContentString(), CoreMatchers.containsString(substring));
 	}
 
+	public void assertContentTypeEquals(String string) {
+		Assert.assertThat(this.getContentType().get(), CoreMatchers.equalTo(string));
+	}
+
 	public CloseableHttpResponse getResponse() {
 		return response;
 	}
@@ -84,4 +88,5 @@ public class TestMechResponse {
 	public byte[] getContent() {
 		return content;
 	}
+
 }
