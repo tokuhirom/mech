@@ -1,5 +1,7 @@
 package me.geso.testmech;
 
+import static org.junit.Assert.*;
+
 import java.io.IOException;
 
 import javax.servlet.ServletException;
@@ -11,6 +13,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.junit.Test;
+
+import com.fasterxml.jackson.core.type.TypeReference;
 
 public class TestMechTest {
 
@@ -34,6 +38,9 @@ public class TestMechTest {
 			case "/query":
 				res.getWriter().write("++x++" + req.getParameter("x"));
 				break;
+			case "/readJson":
+				res.getWriter().write("{\"name\":\"fuga\"}");
+				break;
 			case "/json": {
 				ServletInputStream inputStream = req.getInputStream();
 				try (java.util.Scanner s = new java.util.Scanner(inputStream)) {
@@ -55,6 +62,10 @@ public class TestMechTest {
 
 	public static class Form {
 		String name;
+		
+		// dummy
+		public Form() {
+		}
 
 		public Form(String name) {
 			this.name = name;
@@ -94,6 +105,15 @@ public class TestMechTest {
 		TestMechResponse res = mech.postJSON("/json", form).execute();
 		res.assertSuccess();
 		res.assertContentEquals("+++{\"name\":\"hoge\"}+++");
+	}
+
+	@Test
+	public void testReadJsonWithTypeReference() {
+		TestMechJettyServlet mech = new TestMechJettyServlet(Servlet.class);
+		TestMechResponse res = mech.get("/readJson").execute();
+		res.assertSuccess();
+		Form form = res.readJSON(new TypeReference<Form>() {});
+		assertEquals(form.getName(), "fuga");
 	}
 
 	@Test

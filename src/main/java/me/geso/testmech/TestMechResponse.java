@@ -10,6 +10,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class TestMechResponse {
@@ -48,6 +49,15 @@ public class TestMechResponse {
 		try {
 			ObjectMapper mapper = new ObjectMapper();
 			return mapper.readValue(getContent(), valueType);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public <T> T readJSON(TypeReference<T> valueTypeRef) {
+		try {
+			ObjectMapper mapper = new ObjectMapper();
+			return mapper.readValue(getContent(), valueTypeRef);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
