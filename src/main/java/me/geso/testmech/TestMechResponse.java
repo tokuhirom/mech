@@ -4,7 +4,6 @@ import static org.hamcrest.CoreMatchers.both;
 import static org.hamcrest.Matchers.*;
 
 import java.nio.charset.Charset;
-import java.util.Optional;
 
 import org.apache.http.Header;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -32,12 +31,12 @@ public class TestMechResponse {
 		return getResponse().getFirstHeader(name).getValue();
 	}
 
-	public Optional<String> getContentType() {
+	public String getContentType() {
 		Header header = getResponse().getFirstHeader("Content-Type");
 		if (header != null) {
-			return Optional.of(header.getValue());
+			return header.getValue();
 		} else {
-			return Optional.empty();
+			return null;
 		}
 	}
 
@@ -65,7 +64,7 @@ public class TestMechResponse {
 	}
 
 	public void assertContentTypeStartsWith(String prefix) {
-		Assert.assertThat(this.getContentType().get(), CoreMatchers.startsWith(prefix));
+		Assert.assertThat(this.getContentType(), CoreMatchers.startsWith(prefix));
 	}
 
 	public void assertContentEquals(String s) {
@@ -73,7 +72,7 @@ public class TestMechResponse {
 	}
 
 	public void assertContentTypeContains(String s) {
-		Assert.assertThat(this.getContentType().get(), CoreMatchers.containsString(s));
+		Assert.assertThat(this.getContentType(), CoreMatchers.containsString(s));
 	}
 
 	public void assertContentContains(String substring) {
@@ -81,7 +80,7 @@ public class TestMechResponse {
 	}
 
 	public void assertContentTypeEquals(String string) {
-		Assert.assertThat(this.getContentType().get(), CoreMatchers.equalTo(string));
+		Assert.assertThat(this.getContentType(), CoreMatchers.equalTo(string));
 	}
 
 	public CloseableHttpResponse getResponse() {
