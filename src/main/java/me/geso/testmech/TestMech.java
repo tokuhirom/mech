@@ -33,7 +33,11 @@ public class TestMech {
 
 	public TestMechRequest get(String path) {
 		try {
-			URI url = new URIBuilder(baseURL).setPath(path).build();
+			baseURL = baseURL.replaceFirst("/$", "");
+			if (path.startsWith("/")) {
+				path = "/" + path;
+			}
+			URI url = new URI(baseURL + path);
 			HttpGet get = new HttpGet(url);
 			return new TestMechRequest(cookieStore, get);
 		} catch (Exception e) {

@@ -21,6 +21,7 @@ public class TestMechTest {
 				throws ServletException, IOException {
 			HttpServletRequest req = (HttpServletRequest) sreq;
 			HttpServletResponse res = (HttpServletResponse) sres;
+			System.out.println(req.getPathInfo());
 			switch (req.getPathInfo()) {
 			case "/":
 				res.setContentType("text/plain; charset=UTF-8");
@@ -29,6 +30,9 @@ public class TestMechTest {
 			case "/hogehoge":
 				res.setContentType("iyan");
 				res.getWriter().write("hogehoge");
+				break;
+			case "/query":
+				res.getWriter().write("++x++" + req.getParameter("x"));
 				break;
 			case "/json": {
 				ServletInputStream inputStream = req.getInputStream();
@@ -90,6 +94,14 @@ public class TestMechTest {
 		TestMechResponse res = mech.postJSON("/json", form).execute();
 		res.assertSuccess();
 		res.assertContentEquals("+++{\"name\":\"hoge\"}+++");
+	}
+
+	@Test
+	public void testQuery() {
+		TestMechJettyServlet mech = new TestMechJettyServlet(Servlet.class);
+		TestMechResponse res = mech.get("/query?x=y").execute();
+		res.assertSuccess();
+		res.assertContentEquals("++x++y");
 	}
 
 }
