@@ -1,5 +1,8 @@
 package me.geso.testmech;
 
+import static org.hamcrest.CoreMatchers.both;
+import static org.hamcrest.Matchers.*;
+
 import java.nio.charset.Charset;
 import java.util.Optional;
 
@@ -53,7 +56,7 @@ public class TestMechResponse {
 
 	public void assertSuccess() {
 		int status = getStatus();
-		Assert.assertTrue(200 <= status && status < 300);
+		Assert.assertThat(status, both(greaterThanOrEqualTo(200)).and(lessThan(300)));
 	}
 
 	public void assertStatusEquals(int statusCode) {
