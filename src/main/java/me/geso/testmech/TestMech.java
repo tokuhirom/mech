@@ -31,13 +31,22 @@ public class TestMech {
 		this.cookieStore.addCookie(cookie);
 	}
 
-	public TestMechRequest get(String path) {
+	private URI makeURI(String pathQuery) {
 		try {
 			baseURL = baseURL.replaceFirst("/$", "");
-			if (path.startsWith("/")) {
-				path = "/" + path;
+			if (pathQuery.startsWith("/")) {
+				pathQuery = "/" + pathQuery;
 			}
-			URI url = new URI(baseURL + path);
+			URI url = new URI(baseURL + pathQuery);
+			return url;
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public TestMechRequest get(String pathQuery) {
+		try {
+			URI url = makeURI(pathQuery);
 			HttpGet get = new HttpGet(url);
 			return new TestMechRequest(cookieStore, get);
 		} catch (Exception e) {
@@ -54,7 +63,7 @@ public class TestMech {
 			ObjectMapper mapper = new ObjectMapper();
 			mapper.configure(JsonGenerator.Feature.ESCAPE_NON_ASCII, true);
 			byte[] json = mapper.writeValueAsBytes(params);
-			URI url = new URIBuilder(baseURL).setPath(path).build();
+			URI url = makeURI(path);
 			HttpPost post = new HttpPost(url);
 			post.setHeader("Content-Type",
 					"application/json; charset=utf-8");

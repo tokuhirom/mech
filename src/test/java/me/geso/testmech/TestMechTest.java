@@ -108,6 +108,15 @@ public class TestMechTest {
 	}
 
 	@Test
+	public void testJsonPathQuery() {
+		Form form = new Form("hoge");
+		TestMechJettyServlet mech = new TestMechJettyServlet(Servlet.class);
+		TestMechResponse res = mech.postJSON("/json?foo=bar", form).execute();
+		res.assertSuccess();
+		res.assertContentEquals("+++{\"name\":\"hoge\"}+++");
+	}
+
+	@Test
 	public void testReadJsonWithTypeReference() {
 		TestMechJettyServlet mech = new TestMechJettyServlet(Servlet.class);
 		TestMechResponse res = mech.get("/readJson").execute();
