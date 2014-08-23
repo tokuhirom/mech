@@ -29,6 +29,25 @@ Testing library for web applications. You can test web application based on serv
 		res.assertSuccess();
 		res.assertContentEquals("+++{\"name\":\"hoge\"}+++");
 	}
+	
+	@Test
+	public void testPostForm() {
+		TestMechJettyServlet mech = new TestMechJettyServlet(Servlet.class);
+		TestMechResponse res = mech.post("/postForm").param("name", "pp太郎")
+				.execute();
+		res.assertSuccess();
+		res.assertContentEquals("pp太郎");
+	}
+
+	@Test
+	public void testPostMultipart() {
+		TestMechJettyServlet mech = new TestMechJettyServlet(Servlet.class);
+		TestMechResponse res = mech.postMultipart("/postMultipart")
+				.param("name", "pp太郎").file("file", new File("pom.xml"))
+				.execute();
+		res.assertSuccess();
+		res.assertContentEquals("pp太郎XXXpom.xml");
+	}
 
 ## Install with maven
 
