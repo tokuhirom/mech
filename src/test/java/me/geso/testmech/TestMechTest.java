@@ -2,7 +2,10 @@ package me.geso.testmech;
 
 import static org.junit.Assert.*;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
@@ -12,6 +15,10 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.FileItemFactory;
+import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -23,46 +30,71 @@ public class TestMechTest {
 
 		public void service(ServletRequest sreq, ServletResponse sres)
 				throws ServletException, IOException {
-			HttpServletRequest req = (HttpServletRequest) sreq;
-			HttpServletResponse res = (HttpServletResponse) sres;
-			System.out.println(req.getPathInfo());
-			switch (req.getPathInfo()) {
-			case "/":
-				res.setContentType("text/plain; charset=UTF-8");
-				res.getWriter().write("heheh");
-				break;
-			case "/hogehoge":
-				res.setContentType("iyan");
-				res.getWriter().write("hogehoge");
-				break;
-			case "/query":
-				res.getWriter().write("++x++" + req.getParameter("x"));
-				break;
-			case "/readJson":
-				res.getWriter().write("{\"name\":\"fuga\"}");
-				break;
-			case "/json": {
-				ServletInputStream inputStream = req.getInputStream();
-				try (java.util.Scanner s = new java.util.Scanner(inputStream)) {
-					s.useDelimiter("\\A");
-					String buf = s.hasNext() ? s.next() : "";
-					System.out.println(buf);
-
+			try {
+				HttpServletRequest req = (HttpServletRequest) sreq;
+				HttpServletResponse res = (HttpServletResponse) sres;
+				System.out.println(req.getPathInfo());
+				switch (req.getPathInfo()) {
+				case "/":
+					res.setContentType("text/plain; charset=UTF-8");
+					res.getWriter().write("heheh");
+					break;
+				case "/hogehoge":
 					res.setContentType("iyan");
-					res.getWriter().write("+++" + buf + "+++");
+					res.getWriter().write("hogehoge");
+					break;
+				case "/query":
+					res.getWriter().write("++x++" + req.getParameter("x"));
+					break;
+				case "/readJson":
+					res.getWriter().write("{\"name\":\"fuga\"}");
+					break;
+				case "/postForm": {
+					String name = req.getParameter("name");
+					res.setCharacterEncoding("UTF-8");
+					res.getWriter().write(name);
+					break;
 				}
-				break;
-			}
-			default:
-				res.setStatus(404);
-				break;
+				case "/postMultipart": {
+					req.setCharacterEncoding("UTF-8");
+					res.setCharacterEncoding("UTF-8");
+					FileItemFactory factory = new DiskFileItemFactory();
+					ServletFileUpload servletFileUpload = new ServletFileUpload(
+							factory);
+					Map<String, List<FileItem>> map = servletFileUpload
+							.parseParameterMap(req);
+					String name = map.get("name").get(0).getString();
+					List<FileItem> files = map.get("file");
+					FileItem file = files.get(0);
+					res.getWriter().write(name + "XXX" + file.getName());
+					break;
+				}
+				case "/json": {
+					ServletInputStream inputStream = req.getInputStream();
+					try (java.util.Scanner s = new java.util.Scanner(
+							inputStream)) {
+						s.useDelimiter("\\A");
+						String buf = s.hasNext() ? s.next() : "";
+						System.out.println(buf);
+
+						res.setContentType("iyan");
+						res.getWriter().write("+++" + buf + "+++");
+					}
+					break;
+				}
+				default:
+					res.setStatus(404);
+					break;
+				}
+			} catch (Exception e) {
+				throw new RuntimeException(e);
 			}
 		}
 	}
 
 	public static class Form {
 		String name;
-		
+
 		// dummy
 		public Form() {
 		}
@@ -121,7 +153,8 @@ public class TestMechTest {
 		TestMechJettyServlet mech = new TestMechJettyServlet(Servlet.class);
 		TestMechResponse res = mech.get("/readJson").execute();
 		res.assertSuccess();
-		Form form = res.readJSON(new TypeReference<Form>() {});
+		Form form = res.readJSON(new TypeReference<Form>() {
+		});
 		assertEquals(form.getName(), "fuga");
 	}
 
@@ -131,6 +164,25 @@ public class TestMechTest {
 		TestMechResponse res = mech.get("/query?x=y").execute();
 		res.assertSuccess();
 		res.assertContentEquals("++x++y");
+	}
+
+	@Test
+	public void testPostForm() {
+		TestMechJettyServlet mech = new TestMechJettyServlet(Servlet.class);
+		TestMechResponse res = mech.post("/postForm").param("name", "pp太郎")
+				.execute();
+		res.assertSuccess();
+		res.assertContentEquals("pp太郎");
+	}
+
+	@Test
+	public void testPostMultipart() {
+		TestMechJettyServlet mech = new TestMechJettyServlet(Servlet.class);
+		TestMechResponse res = mech.postMultipart("/postMultipart")
+				.param("name", "pp太郎").file("file", new File("pom.xml"))
+				.execute();
+		res.assertSuccess();
+		res.assertContentEquals("pp太郎XXXpom.xml");
 	}
 
 }
