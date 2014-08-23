@@ -1,8 +1,18 @@
 # testmech
 
+[![Build Status](https://travis-ci.org/tokuhirom/testmech.svg?branch=master)](https://travis-ci.org/tokuhirom/testmech)
+
 Testing library for web applications. You can test web application based on servlet API very easy.
 
 ## SYNOPSIS
+
+	@Test
+	public void testHttp() {
+		TestMech mech = new TestMech("http://google.com/");
+		TestMechResponse res = mech.get("/").execute();
+		res.assertSuccess();
+		res.assertContentContains("heheh");
+	}
 
 	@Test
 	public void testRoot() {
@@ -29,7 +39,7 @@ Testing library for web applications. You can test web application based on serv
 		res.assertSuccess();
 		res.assertContentEquals("+++{\"name\":\"hoge\"}+++");
 	}
-	
+
 	@Test
 	public void testPostForm() {
 		TestMechJettyServlet mech = new TestMechJettyServlet(Servlet.class);
