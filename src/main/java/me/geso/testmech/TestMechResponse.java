@@ -48,7 +48,7 @@ public class TestMechResponse {
 	public <T> T readJSON(Class<T> valueType) {
 		try {
 			ObjectMapper mapper = new ObjectMapper();
-			return mapper.readValue(getContent(), valueType);
+			return mapper.readValue(this.content, valueType);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -57,7 +57,7 @@ public class TestMechResponse {
 	public <T> T readJSON(TypeReference<T> valueTypeRef) {
 		try {
 			ObjectMapper mapper = new ObjectMapper();
-			return mapper.readValue(getContent(), valueTypeRef);
+			return mapper.readValue(this.content, valueTypeRef);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
