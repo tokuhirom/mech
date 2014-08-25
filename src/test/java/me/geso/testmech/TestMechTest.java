@@ -1,6 +1,7 @@
 package me.geso.testmech;
 
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,10 +26,10 @@ import org.junit.Test;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 public class TestMechTest {
-
+	
 	public static class Servlet extends HttpServlet {
 		private static final long serialVersionUID = 1L;
-
+		
 		public void service(ServletRequest sreq, ServletResponse sres)
 				throws ServletException, IOException {
 			try {
@@ -47,6 +48,13 @@ public class TestMechTest {
 				case "/query":
 					res.getWriter().write("++x++" + req.getParameter("x"));
 					break;
+				case "/textsjis": {
+					String json = "田中";
+					byte[] jsonBytes = json.getBytes(Charset.forName("Shift_JIS"));
+					res.setContentType("text/plain; charset=Shift_JIS");
+					res.getOutputStream().write(jsonBytes);
+					break;
+				}
 				case "/readJson":
 					res.getWriter().write("{\"name\":\"fuga\"}");
 					break;
@@ -72,6 +80,7 @@ public class TestMechTest {
 					String name = map.get("name").get(0).getString();
 					List<FileItem> files = map.get("file");
 					FileItem file = files.get(0);
+					res.setContentType("text/plain; charset=utf-8");
 					res.getWriter().write(name + "XXX" + file.getName());
 					break;
 				}
@@ -162,6 +171,14 @@ public class TestMechTest {
 		Form form = res.readJSON(new TypeReference<Form>() {
 		});
 		assertEquals(form.getName(), "fuga");
+	}
+
+	@Test
+	public void testSjis() {
+		TestMechJettyServlet mech = new TestMechJettyServlet(Servlet.class);
+		TestMechResponse res = mech.get("/textsjis").execute();
+		res.assertSuccess();
+		assertThat(res.getContentString()).isEqualTo("田中");
 	}
 
 	@Test

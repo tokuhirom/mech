@@ -7,6 +7,7 @@ import java.nio.charset.Charset;
 
 import org.apache.http.Header;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.entity.ContentType;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 
@@ -41,9 +42,13 @@ public class TestMechResponse {
 		}
 	}
 
-	// TODO: detect charset by content-type.
 	public String getContentString() {
-		return new String(getContent(), Charset.forName("UTF-8"));
+		ContentType contentType = ContentType.getOrDefault(this.response.getEntity());
+		return new String(this.content, contentType.getCharset());
+	}
+
+	public String getContentString(Charset charset) {
+		return new String(getContent(), charset);
 	}
 
 	public <T> T readJSON(Class<T> valueType) {
