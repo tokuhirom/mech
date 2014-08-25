@@ -85,7 +85,8 @@ public class TestMechTest {
 						}))) {
 			TestMechResponse res = mech.get("/").execute();
 			res.assertSuccess();
-			res.assertContentTypeEquals("text/plain; charset=UTF-8");
+			res.assertContentTypeMimeTypeEquals("text/plain");
+			res.assertContentTypeCharsetEquals("UTF-8");
 			res.assertContentContains("heheh");
 		}
 	}
@@ -95,13 +96,14 @@ public class TestMechTest {
 		try (TestMechJettyServlet mech = new TestMechJettyServlet(
 				new CallbackServlet(
 						(req, res) -> {
-							res.setContentType("iyan");
+							res.setContentType("application/x-iyan; charset=Shift_JIS");
 							res.getWriter().write("hogehoge");
 						}))) {
 			TestMechResponse res = mech.get("/hogehoge").execute();
 			res.assertSuccess();
 			res.assertStatusEquals(200);
-			res.assertContentTypeContains("iyan");
+			res.assertContentTypeMimeTypeEquals("application/x-iyan");
+			res.assertContentTypeCharsetEquals("Shift_JIS");
 		}
 	}
 
@@ -255,7 +257,6 @@ public class TestMechTest {
 							res.getWriter()
 									.write(name + "XXX" + file.getName());
 						}))) {
-
 			TestMechResponse res = mech.postMultipart("/postMultipart")
 					.param("name", "pp太郎").file("file", new File("pom.xml"))
 					.execute();

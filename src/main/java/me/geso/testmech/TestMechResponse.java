@@ -33,13 +33,9 @@ public class TestMechResponse {
 		return getResponse().getFirstHeader(name).getValue();
 	}
 
-	public String getContentType() {
-		Header header = getResponse().getFirstHeader("Content-Type");
-		if (header != null) {
-			return header.getValue();
-		} else {
-			return null;
-		}
+	public ContentType getContentType() {
+		ContentType contentType = ContentType.getOrDefault(this.response.getEntity());
+		return contentType;
 	}
 
 	public String getContentString() {
@@ -79,24 +75,20 @@ public class TestMechResponse {
 		Assert.assertEquals(statusCode, actual);
 	}
 
-	public void assertContentTypeStartsWith(String prefix) {
-		Assert.assertThat(this.getContentType(), CoreMatchers.startsWith(prefix));
+	public void assertContentTypeMimeTypeEquals(String mimeType) {
+		Assert.assertThat(this.getContentType().getMimeType(), CoreMatchers.equalTo(mimeType));
 	}
 
 	public void assertContentEquals(String s) {
 		Assert.assertThat(this.getContentString(), CoreMatchers.equalTo(s));
 	}
 
-	public void assertContentTypeContains(String s) {
-		Assert.assertThat(this.getContentType(), CoreMatchers.containsString(s));
+	public void assertContentTypeCharsetEquals(String charsetName) {
+		Assert.assertThat(this.getContentType().getCharset(), CoreMatchers.equalTo(Charset.forName(charsetName)));
 	}
 
 	public void assertContentContains(String substring) {
 		Assert.assertThat(this.getContentString(), CoreMatchers.containsString(substring));
-	}
-
-	public void assertContentTypeEquals(String string) {
-		Assert.assertThat(this.getContentType(), CoreMatchers.equalTo(string));
 	}
 
 	public CloseableHttpResponse getResponse() {
