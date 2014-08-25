@@ -28,7 +28,7 @@ Testing library for web applications. You can test web application based on serv
 		TestMechResponse res = mech.get("/hogehoge").execute();
 		res.assertSuccess();
 		res.assertStatusEquals(200);
-		res.assertContentTypeContains("iyan");
+		res.assertContentTypeMimeTypeEquals("text/plain");
 	}
 
 	@Test
