@@ -7,12 +7,14 @@ import org.apache.http.client.CookieStore;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 
 public class TestMechRequest {
 
 	private HttpRequestBase request;
 	private CookieStore cookieStore;
+	private boolean redirectHandlingDisabled = false;
 
 	public TestMechRequest(CookieStore cookieStore, HttpRequestBase request) {
 		this.cookieStore = cookieStore;
@@ -32,11 +34,20 @@ public class TestMechRequest {
 		this.request.addHeader(name, value);
 		return this;
 	}
-	
+
+	public TestMechRequest disableRedirectHandling() {
+		this.redirectHandlingDisabled = true;
+		return this;
+	}
+
 	public TestMechResponse execute() {
-		try (CloseableHttpClient httpclient = HttpClients.custom()
-				.setDefaultCookieStore(cookieStore)
-				.build()) {
+		HttpClientBuilder custom = HttpClients.custom();
+		custom.setDefaultCookieStore(cookieStore);
+		if (this.redirectHandlingDisabled) {
+			custom.disableRedirectHandling();
+		}
+
+		try (CloseableHttpClient httpclient = custom.build()) {
 			try (CloseableHttpResponse response = httpclient
 					.execute(request)) {
 				ByteArrayOutputStream stream = new ByteArrayOutputStream();

@@ -333,4 +333,24 @@ public class TestMechTest {
 			res.assertContentEquals("Bar");
 		}
 	}
+
+	@Test
+	public void testDisableRedirectHandling() throws UnsupportedEncodingException,
+			FileUploadException, IOException, Exception {
+		try (TestMechJettyServlet mech = new TestMechJettyServlet(
+				new CallbackServlet(
+						(req, res) -> {
+							req.setCharacterEncoding("UTF-8");
+							res.setCharacterEncoding("UTF-8");
+							if (req.getPathInfo().equals("/")) {
+								res.sendRedirect("/x");
+							} else {
+								res.getWriter().write("HAHA");
+							}
+						}))) {
+			mech.setHeader("X-Foo", "Bar");
+			TestMechResponse res = mech.get("/").disableRedirectHandling().execute();
+			res.assertStatusEquals(302);
+		}
+	}
 }
