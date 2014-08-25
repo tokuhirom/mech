@@ -8,8 +8,8 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 
 /**
- * Alpha quaility... I will change API without notice. And so, I want to split
- * the distribution if it's okay.
+ * Tester class for Servlets. This class runs httpd by jetty. Your servlet runs
+ * on jetty.
  * 
  * @author tokuhirom
  *
