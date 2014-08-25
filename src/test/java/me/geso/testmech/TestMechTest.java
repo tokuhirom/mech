@@ -216,17 +216,20 @@ public class TestMechTest {
 						}))) {
 			TestMechResponse res = mech.get("/readJsonUTF8").execute();
 			res.assertSuccess();
-			ApiResponse<String> dat = res.readJSON(new TypeReference<ApiResponse<String>>() {
-			});
+			ApiResponse<String> dat = res
+					.readJSON(new TypeReference<ApiResponse<String>>() {
+					});
 			assertEquals(dat.getData(), "田中");
 		}
 	}
-	
+
 	public static class ApiResponse<T> {
 		T data;
+
 		public T getData() {
 			return this.data;
 		}
+
 		public void setData(T data) {
 			this.data = data;
 		}
@@ -290,6 +293,44 @@ public class TestMechTest {
 					.execute();
 			res.assertSuccess();
 			res.assertContentEquals("pp太郎XXXpom.xml");
+		}
+	}
+
+	@Test
+	public void testSetUserAgent() throws UnsupportedEncodingException,
+			FileUploadException, IOException, Exception {
+		try (TestMechJettyServlet mech = new TestMechJettyServlet(
+				new CallbackServlet(
+						(req, res) -> {
+							req.setCharacterEncoding("UTF-8");
+							res.setCharacterEncoding("UTF-8");
+							res.getWriter().write(req.getHeader("User-Agent"));
+						}))) {
+			mech.setUserAgent("My own browser");
+			TestMechResponse res = mech.postMultipart("/postMultipart")
+					.param("name", "pp太郎").file("file", new File("pom.xml"))
+					.execute();
+			res.assertSuccess();
+			res.assertContentEquals("My own browser");
+		}
+	}
+
+	@Test
+	public void testSetHeader() throws UnsupportedEncodingException,
+			FileUploadException, IOException, Exception {
+		try (TestMechJettyServlet mech = new TestMechJettyServlet(
+				new CallbackServlet(
+						(req, res) -> {
+							req.setCharacterEncoding("UTF-8");
+							res.setCharacterEncoding("UTF-8");
+							res.getWriter().write(req.getHeader("X-Foo"));
+						}))) {
+			mech.setHeader("X-Foo", "Bar");
+			TestMechResponse res = mech.postMultipart("/postMultipart")
+					.param("name", "pp太郎").file("file", new File("pom.xml"))
+					.execute();
+			res.assertSuccess();
+			res.assertContentEquals("Bar");
 		}
 	}
 }

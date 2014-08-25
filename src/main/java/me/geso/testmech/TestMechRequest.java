@@ -27,7 +27,7 @@ public class TestMechRequest {
 		this.request.setHeader(name, value);
 		return this;
 	}
-	
+
 	public TestMechRequest addHeader(String name, String value) {
 		this.request.addHeader(name, value);
 		return this;
