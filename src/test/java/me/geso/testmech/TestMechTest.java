@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 
@@ -48,6 +49,11 @@ public class TestMechTest {
 					break;
 				case "/readJson":
 					res.getWriter().write("{\"name\":\"fuga\"}");
+					break;
+				case "/readJsonUTF8":
+					String json = "{\"name\":\"田中\"}";
+					byte[] jsonBytes = json.getBytes(Charset.forName("UTF-8"));
+					res.getOutputStream().write(jsonBytes);;
 					break;
 				case "/postForm": {
 					String name = req.getParameter("name");
@@ -156,6 +162,16 @@ public class TestMechTest {
 		Form form = res.readJSON(new TypeReference<Form>() {
 		});
 		assertEquals(form.getName(), "fuga");
+	}
+
+	@Test
+	public void testReadJsonUTF8() {
+		TestMechJettyServlet mech = new TestMechJettyServlet(Servlet.class);
+		TestMechResponse res = mech.get("/readJsonUTF8").execute();
+		res.assertSuccess();
+		Form form = res.readJSON(new TypeReference<Form>() {
+		});
+		assertEquals(form.getName(), "田中");
 	}
 
 	@Test

@@ -41,6 +41,7 @@ public class TestMechResponse {
 		}
 	}
 
+	// TODO: detect charset by content-type.
 	public String getContentString() {
 		return new String(getContent(), Charset.forName("UTF-8"));
 	}
