@@ -205,6 +205,34 @@ public class TestMechTest {
 	}
 
 	@Test
+	public void testReadJsonUTF8Number2() throws Exception {
+		try (TestMechJettyServlet mech = new TestMechJettyServlet(
+				new CallbackServlet(
+						(req, res) -> {
+							String json = "{\"data\":\"田中\"}";
+							byte[] jsonBytes = json.getBytes(Charset
+									.forName("UTF-8"));
+							res.getOutputStream().write(jsonBytes);
+						}))) {
+			TestMechResponse res = mech.get("/readJsonUTF8").execute();
+			res.assertSuccess();
+			ApiResponse<String> dat = res.readJSON(new TypeReference<ApiResponse<String>>() {
+			});
+			assertEquals(dat.getData(), "田中");
+		}
+	}
+	
+	public static class ApiResponse<T> {
+		T data;
+		public T getData() {
+			return this.data;
+		}
+		public void setData(T data) {
+			this.data = data;
+		}
+	}
+
+	@Test
 	public void testQuery() throws Exception {
 		try (TestMechJettyServlet mech = new TestMechJettyServlet(
 				new CallbackServlet(
