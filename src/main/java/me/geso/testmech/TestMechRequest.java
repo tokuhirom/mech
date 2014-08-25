@@ -4,21 +4,27 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import org.apache.http.client.CookieStore;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
 
+/**
+ * Client side HTTP request object.
+ * 
+ * @author tokuhirom
+ *
+ */
 public class TestMechRequest {
 
 	private HttpRequestBase request;
-	private CookieStore cookieStore;
-	private boolean redirectHandlingDisabled = false;
+	private final HttpClientBuilder httpClientBuilder;
 
 	public TestMechRequest(CookieStore cookieStore, HttpRequestBase request) {
-		this.cookieStore = cookieStore;
 		this.request = request;
+		this.httpClientBuilder = HttpClientBuilder.create();
+		this.httpClientBuilder.setDefaultCookieStore(cookieStore);
 	}
 
 	public String getMethod() {
@@ -36,18 +42,17 @@ public class TestMechRequest {
 	}
 
 	public TestMechRequest disableRedirectHandling() {
-		this.redirectHandlingDisabled = true;
+		this.httpClientBuilder.disableRedirectHandling();
+		return this;
+	}
+	
+	public TestMechRequest setRequestConfig(RequestConfig requestConfig) {
+		this.httpClientBuilder.setDefaultRequestConfig(requestConfig);
 		return this;
 	}
 
 	public TestMechResponse execute() {
-		HttpClientBuilder custom = HttpClients.custom();
-		custom.setDefaultCookieStore(cookieStore);
-		if (this.redirectHandlingDisabled) {
-			custom.disableRedirectHandling();
-		}
-
-		try (CloseableHttpClient httpclient = custom.build()) {
+		try (CloseableHttpClient httpclient = this.httpClientBuilder.build()) {
 			try (CloseableHttpResponse response = httpclient
 					.execute(request)) {
 				ByteArrayOutputStream stream = new ByteArrayOutputStream();
