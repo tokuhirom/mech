@@ -26,83 +26,29 @@ import org.junit.Test;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 public class TestMechTest {
-	
-	public static class Servlet extends HttpServlet {
+
+	@FunctionalInterface
+	public static interface ServletCallback {
+		public void service(HttpServletRequest sreq, HttpServletResponse sres)
+				throws Exception;
+	}
+
+	public static class CallbackServlet extends HttpServlet {
 		private static final long serialVersionUID = 1L;
-		
+		private final ServletCallback callback;
+
+		public CallbackServlet(ServletCallback callback) {
+			this.callback = callback;
+		}
+
 		public void service(ServletRequest sreq, ServletResponse sres)
 				throws ServletException, IOException {
+			HttpServletRequest req = (HttpServletRequest) sreq;
+			HttpServletResponse res = (HttpServletResponse) sres;
 			try {
-				HttpServletRequest req = (HttpServletRequest) sreq;
-				HttpServletResponse res = (HttpServletResponse) sres;
-				System.out.println(req.getPathInfo());
-				switch (req.getPathInfo()) {
-				case "/":
-					res.setContentType("text/plain; charset=UTF-8");
-					res.getWriter().write("heheh");
-					break;
-				case "/hogehoge":
-					res.setContentType("iyan");
-					res.getWriter().write("hogehoge");
-					break;
-				case "/query":
-					res.getWriter().write("++x++" + req.getParameter("x"));
-					break;
-				case "/textsjis": {
-					String json = "田中";
-					byte[] jsonBytes = json.getBytes(Charset.forName("Shift_JIS"));
-					res.setContentType("text/plain; charset=Shift_JIS");
-					res.getOutputStream().write(jsonBytes);
-					break;
-				}
-				case "/readJson":
-					res.getWriter().write("{\"name\":\"fuga\"}");
-					break;
-				case "/readJsonUTF8":
-					String json = "{\"name\":\"田中\"}";
-					byte[] jsonBytes = json.getBytes(Charset.forName("UTF-8"));
-					res.getOutputStream().write(jsonBytes);;
-					break;
-				case "/postForm": {
-					String name = req.getParameter("name");
-					res.setCharacterEncoding("UTF-8");
-					res.getWriter().write(name);
-					break;
-				}
-				case "/postMultipart": {
-					req.setCharacterEncoding("UTF-8");
-					res.setCharacterEncoding("UTF-8");
-					FileItemFactory factory = new DiskFileItemFactory();
-					ServletFileUpload servletFileUpload = new ServletFileUpload(
-							factory);
-					Map<String, List<FileItem>> map = servletFileUpload
-							.parseParameterMap(req);
-					String name = map.get("name").get(0).getString();
-					List<FileItem> files = map.get("file");
-					FileItem file = files.get(0);
-					res.setContentType("text/plain; charset=utf-8");
-					res.getWriter().write(name + "XXX" + file.getName());
-					break;
-				}
-				case "/json": {
-					ServletInputStream inputStream = req.getInputStream();
-					try (java.util.Scanner s = new java.util.Scanner(
-							inputStream)) {
-						s.useDelimiter("\\A");
-						String buf = s.hasNext() ? s.next() : "";
-						System.out.println(buf);
-
-						res.setContentType("iyan");
-						res.getWriter().write("+++" + buf + "+++");
-					}
-					break;
-				}
-				default:
-					res.setStatus(404);
-					break;
-				}
-			} catch (Exception e) {
-				throw new RuntimeException(e);
+				this.callback.service(req, res);
+			} catch (Exception ex) {
+				throw new RuntimeException(ex);
 			}
 		}
 	}
@@ -129,7 +75,13 @@ public class TestMechTest {
 
 	@Test
 	public void testRoot() {
-		TestMechJettyServlet mech = new TestMechJettyServlet(Servlet.class);
+		TestMechJettyServlet mech = new TestMechJettyServlet(
+				new CallbackServlet(
+						(req, res) -> {
+							res.setContentType("text/plain; charset=UTF-8");
+							res.getWriter().write("heheh");
+						}));
+
 		TestMechResponse res = mech.get("/").execute();
 		res.assertSuccess();
 		res.assertContentTypeEquals("text/plain; charset=UTF-8");
@@ -138,7 +90,13 @@ public class TestMechTest {
 
 	@Test
 	public void testHoge() {
-		TestMechJettyServlet mech = new TestMechJettyServlet(Servlet.class);
+		TestMechJettyServlet mech = new TestMechJettyServlet(
+				new CallbackServlet(
+						(req, res) -> {
+							res.setContentType("iyan");
+							res.getWriter().write("hogehoge");
+						}));
+
 		TestMechResponse res = mech.get("/hogehoge").execute();
 		res.assertSuccess();
 		res.assertStatusEquals(200);
@@ -147,8 +105,22 @@ public class TestMechTest {
 
 	@Test
 	public void testJson() {
+		TestMechJettyServlet mech = new TestMechJettyServlet(
+				new CallbackServlet(
+						(req, res) -> {
+							ServletInputStream inputStream = req
+									.getInputStream();
+							try (java.util.Scanner s = new java.util.Scanner(
+									inputStream)) {
+								s.useDelimiter("\\A");
+								String buf = s.hasNext() ? s.next() : "";
+
+								res.setContentType("iyan");
+								res.getWriter().write("+++" + buf + "+++");
+							}
+						}));
+
 		Form form = new Form("hoge");
-		TestMechJettyServlet mech = new TestMechJettyServlet(Servlet.class);
 		TestMechResponse res = mech.postJSON("/json", form).execute();
 		res.assertSuccess();
 		res.assertContentEquals("+++{\"name\":\"hoge\"}+++");
@@ -156,8 +128,22 @@ public class TestMechTest {
 
 	@Test
 	public void testJsonPathQuery() {
+		TestMechJettyServlet mech = new TestMechJettyServlet(
+				new CallbackServlet(
+						(req, res) -> {
+							ServletInputStream inputStream = req
+									.getInputStream();
+							try (java.util.Scanner s = new java.util.Scanner(
+									inputStream)) {
+								s.useDelimiter("\\A");
+								String buf = s.hasNext() ? s.next() : "";
+
+								res.setContentType("iyan");
+								res.getWriter().write("+++" + buf + "+++");
+							}
+						}));
+
 		Form form = new Form("hoge");
-		TestMechJettyServlet mech = new TestMechJettyServlet(Servlet.class);
 		TestMechResponse res = mech.postJSON("/json?foo=bar", form).execute();
 		res.assertSuccess();
 		res.assertContentEquals("+++{\"name\":\"hoge\"}+++");
@@ -165,7 +151,12 @@ public class TestMechTest {
 
 	@Test
 	public void testReadJsonWithTypeReference() {
-		TestMechJettyServlet mech = new TestMechJettyServlet(Servlet.class);
+		TestMechJettyServlet mech = new TestMechJettyServlet(
+				new CallbackServlet(
+						(req, res) -> {
+							res.getWriter().write("{\"name\":\"fuga\"}");
+						}));
+
 		TestMechResponse res = mech.get("/readJson").execute();
 		res.assertSuccess();
 		Form form = res.readJSON(new TypeReference<Form>() {
@@ -175,7 +166,16 @@ public class TestMechTest {
 
 	@Test
 	public void testSjis() {
-		TestMechJettyServlet mech = new TestMechJettyServlet(Servlet.class);
+		TestMechJettyServlet mech = new TestMechJettyServlet(
+				new CallbackServlet(
+						(req, res) -> {
+							String json = "田中";
+							byte[] jsonBytes = json.getBytes(Charset
+									.forName("Shift_JIS"));
+							res.setContentType("text/plain; charset=Shift_JIS");
+							res.getOutputStream().write(jsonBytes);
+						}));
+
 		TestMechResponse res = mech.get("/textsjis").execute();
 		res.assertSuccess();
 		assertThat(res.getContentString()).isEqualTo("田中");
@@ -183,7 +183,15 @@ public class TestMechTest {
 
 	@Test
 	public void testReadJsonUTF8() {
-		TestMechJettyServlet mech = new TestMechJettyServlet(Servlet.class);
+		TestMechJettyServlet mech = new TestMechJettyServlet(
+				new CallbackServlet(
+						(req, res) -> {
+							String json = "{\"name\":\"田中\"}";
+							byte[] jsonBytes = json.getBytes(Charset
+									.forName("UTF-8"));
+							res.getOutputStream().write(jsonBytes);
+						}));
+
 		TestMechResponse res = mech.get("/readJsonUTF8").execute();
 		res.assertSuccess();
 		Form form = res.readJSON(new TypeReference<Form>() {
@@ -193,7 +201,13 @@ public class TestMechTest {
 
 	@Test
 	public void testQuery() {
-		TestMechJettyServlet mech = new TestMechJettyServlet(Servlet.class);
+		TestMechJettyServlet mech = new TestMechJettyServlet(
+				new CallbackServlet(
+						(req, res) -> {
+							res.getWriter().write(
+									"++x++" + req.getParameter("x"));
+						}));
+
 		TestMechResponse res = mech.get("/query?x=y").execute();
 		res.assertSuccess();
 		res.assertContentEquals("++x++y");
@@ -201,7 +215,16 @@ public class TestMechTest {
 
 	@Test
 	public void testPostForm() {
-		TestMechJettyServlet mech = new TestMechJettyServlet(Servlet.class);
+		TestMechJettyServlet mech = new TestMechJettyServlet(
+				new CallbackServlet(
+						(req, res) -> {
+							req.setCharacterEncoding("UTF-8");
+							String name = req.getParameter("name");
+							res.setCharacterEncoding("UTF-8");
+							res.setContentType("text/plain); charset=utf-8");
+							res.getWriter().write(name);
+						}));
+
 		TestMechResponse res = mech.post("/postForm").param("name", "pp太郎")
 				.execute();
 		res.assertSuccess();
@@ -210,12 +233,28 @@ public class TestMechTest {
 
 	@Test
 	public void testPostMultipart() {
-		TestMechJettyServlet mech = new TestMechJettyServlet(Servlet.class);
+		TestMechJettyServlet mech = new TestMechJettyServlet(
+				new CallbackServlet(
+						(req, res) -> {
+							req.setCharacterEncoding("UTF-8");
+							res.setCharacterEncoding("UTF-8");
+							FileItemFactory factory = new DiskFileItemFactory();
+							ServletFileUpload servletFileUpload = new ServletFileUpload(
+									factory);
+							Map<String, List<FileItem>> map = servletFileUpload
+									.parseParameterMap(req);
+							String name = map.get("name").get(0).getString();
+							List<FileItem> files = map.get("file");
+							FileItem file = files.get(0);
+							res.setContentType("text/plain; charset=utf-8");
+							res.getWriter()
+									.write(name + "XXX" + file.getName());
+						}));
+
 		TestMechResponse res = mech.postMultipart("/postMultipart")
 				.param("name", "pp太郎").file("file", new File("pom.xml"))
 				.execute();
 		res.assertSuccess();
 		res.assertContentEquals("pp太郎XXXpom.xml");
 	}
-
 }
