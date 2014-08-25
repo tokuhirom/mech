@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileItemFactory;
+import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.junit.Test;
@@ -74,38 +76,38 @@ public class TestMechTest {
 	}
 
 	@Test
-	public void testRoot() {
-		TestMechJettyServlet mech = new TestMechJettyServlet(
+	public void testRoot() throws Exception {
+		try (TestMechJettyServlet mech = new TestMechJettyServlet(
 				new CallbackServlet(
 						(req, res) -> {
 							res.setContentType("text/plain; charset=UTF-8");
 							res.getWriter().write("heheh");
-						}));
-
-		TestMechResponse res = mech.get("/").execute();
-		res.assertSuccess();
-		res.assertContentTypeEquals("text/plain; charset=UTF-8");
-		res.assertContentContains("heheh");
+						}))) {
+			TestMechResponse res = mech.get("/").execute();
+			res.assertSuccess();
+			res.assertContentTypeEquals("text/plain; charset=UTF-8");
+			res.assertContentContains("heheh");
+		}
 	}
 
 	@Test
-	public void testHoge() {
-		TestMechJettyServlet mech = new TestMechJettyServlet(
+	public void testHoge() throws Exception {
+		try (TestMechJettyServlet mech = new TestMechJettyServlet(
 				new CallbackServlet(
 						(req, res) -> {
 							res.setContentType("iyan");
 							res.getWriter().write("hogehoge");
-						}));
-
-		TestMechResponse res = mech.get("/hogehoge").execute();
-		res.assertSuccess();
-		res.assertStatusEquals(200);
-		res.assertContentTypeContains("iyan");
+						}))) {
+			TestMechResponse res = mech.get("/hogehoge").execute();
+			res.assertSuccess();
+			res.assertStatusEquals(200);
+			res.assertContentTypeContains("iyan");
+		}
 	}
 
 	@Test
-	public void testJson() {
-		TestMechJettyServlet mech = new TestMechJettyServlet(
+	public void testJson() throws Exception {
+		try (TestMechJettyServlet mech = new TestMechJettyServlet(
 				new CallbackServlet(
 						(req, res) -> {
 							ServletInputStream inputStream = req
@@ -118,17 +120,17 @@ public class TestMechTest {
 								res.setContentType("iyan");
 								res.getWriter().write("+++" + buf + "+++");
 							}
-						}));
-
-		Form form = new Form("hoge");
-		TestMechResponse res = mech.postJSON("/json", form).execute();
-		res.assertSuccess();
-		res.assertContentEquals("+++{\"name\":\"hoge\"}+++");
+						}))) {
+			Form form = new Form("hoge");
+			TestMechResponse res = mech.postJSON("/json", form).execute();
+			res.assertSuccess();
+			res.assertContentEquals("+++{\"name\":\"hoge\"}+++");
+		}
 	}
 
 	@Test
-	public void testJsonPathQuery() {
-		TestMechJettyServlet mech = new TestMechJettyServlet(
+	public void testJsonPathQuery() throws Exception {
+		try (TestMechJettyServlet mech = new TestMechJettyServlet(
 				new CallbackServlet(
 						(req, res) -> {
 							ServletInputStream inputStream = req
@@ -141,32 +143,33 @@ public class TestMechTest {
 								res.setContentType("iyan");
 								res.getWriter().write("+++" + buf + "+++");
 							}
-						}));
-
-		Form form = new Form("hoge");
-		TestMechResponse res = mech.postJSON("/json?foo=bar", form).execute();
-		res.assertSuccess();
-		res.assertContentEquals("+++{\"name\":\"hoge\"}+++");
+						}))) {
+			Form form = new Form("hoge");
+			TestMechResponse res = mech.postJSON("/json?foo=bar", form)
+					.execute();
+			res.assertSuccess();
+			res.assertContentEquals("+++{\"name\":\"hoge\"}+++");
+		}
 	}
 
 	@Test
-	public void testReadJsonWithTypeReference() {
-		TestMechJettyServlet mech = new TestMechJettyServlet(
+	public void testReadJsonWithTypeReference() throws Exception {
+		try (TestMechJettyServlet mech = new TestMechJettyServlet(
 				new CallbackServlet(
 						(req, res) -> {
 							res.getWriter().write("{\"name\":\"fuga\"}");
-						}));
-
-		TestMechResponse res = mech.get("/readJson").execute();
-		res.assertSuccess();
-		Form form = res.readJSON(new TypeReference<Form>() {
-		});
-		assertEquals(form.getName(), "fuga");
+						}))) {
+			TestMechResponse res = mech.get("/readJson").execute();
+			res.assertSuccess();
+			Form form = res.readJSON(new TypeReference<Form>() {
+			});
+			assertEquals(form.getName(), "fuga");
+		}
 	}
 
 	@Test
-	public void testSjis() {
-		TestMechJettyServlet mech = new TestMechJettyServlet(
+	public void testSjis() throws Exception {
+		try (TestMechJettyServlet mech = new TestMechJettyServlet(
 				new CallbackServlet(
 						(req, res) -> {
 							String json = "田中";
@@ -174,48 +177,49 @@ public class TestMechTest {
 									.forName("Shift_JIS"));
 							res.setContentType("text/plain; charset=Shift_JIS");
 							res.getOutputStream().write(jsonBytes);
-						}));
-
-		TestMechResponse res = mech.get("/textsjis").execute();
-		res.assertSuccess();
-		assertThat(res.getContentString()).isEqualTo("田中");
+						}))) {
+			TestMechResponse res = mech.get("/textsjis").execute();
+			res.assertSuccess();
+			assertThat(res.getContentString()).isEqualTo("田中");
+		}
 	}
 
 	@Test
-	public void testReadJsonUTF8() {
-		TestMechJettyServlet mech = new TestMechJettyServlet(
+	public void testReadJsonUTF8() throws Exception {
+		try (TestMechJettyServlet mech = new TestMechJettyServlet(
 				new CallbackServlet(
 						(req, res) -> {
 							String json = "{\"name\":\"田中\"}";
 							byte[] jsonBytes = json.getBytes(Charset
 									.forName("UTF-8"));
 							res.getOutputStream().write(jsonBytes);
-						}));
-
-		TestMechResponse res = mech.get("/readJsonUTF8").execute();
-		res.assertSuccess();
-		Form form = res.readJSON(new TypeReference<Form>() {
-		});
-		assertEquals(form.getName(), "田中");
+						}))) {
+			TestMechResponse res = mech.get("/readJsonUTF8").execute();
+			res.assertSuccess();
+			Form form = res.readJSON(new TypeReference<Form>() {
+			});
+			assertEquals(form.getName(), "田中");
+		}
 	}
 
 	@Test
-	public void testQuery() {
-		TestMechJettyServlet mech = new TestMechJettyServlet(
+	public void testQuery() throws Exception {
+		try (TestMechJettyServlet mech = new TestMechJettyServlet(
 				new CallbackServlet(
 						(req, res) -> {
 							res.getWriter().write(
 									"++x++" + req.getParameter("x"));
-						}));
-
-		TestMechResponse res = mech.get("/query?x=y").execute();
-		res.assertSuccess();
-		res.assertContentEquals("++x++y");
+						}))) {
+			TestMechResponse res = mech.get("/query?x=y").execute();
+			res.assertSuccess();
+			res.assertContentEquals("++x++y");
+		}
 	}
 
 	@Test
-	public void testPostForm() {
-		TestMechJettyServlet mech = new TestMechJettyServlet(
+	public void testPostForm() throws UnsupportedEncodingException,
+			IOException, Exception {
+		try (TestMechJettyServlet mech = new TestMechJettyServlet(
 				new CallbackServlet(
 						(req, res) -> {
 							req.setCharacterEncoding("UTF-8");
@@ -223,17 +227,18 @@ public class TestMechTest {
 							res.setCharacterEncoding("UTF-8");
 							res.setContentType("text/plain); charset=utf-8");
 							res.getWriter().write(name);
-						}));
-
-		TestMechResponse res = mech.post("/postForm").param("name", "pp太郎")
-				.execute();
-		res.assertSuccess();
-		res.assertContentEquals("pp太郎");
+						}))) {
+			TestMechResponse res = mech.post("/postForm").param("name", "pp太郎")
+					.execute();
+			res.assertSuccess();
+			res.assertContentEquals("pp太郎");
+		}
 	}
 
 	@Test
-	public void testPostMultipart() {
-		TestMechJettyServlet mech = new TestMechJettyServlet(
+	public void testPostMultipart() throws UnsupportedEncodingException,
+			FileUploadException, IOException, Exception {
+		try (TestMechJettyServlet mech = new TestMechJettyServlet(
 				new CallbackServlet(
 						(req, res) -> {
 							req.setCharacterEncoding("UTF-8");
@@ -249,12 +254,13 @@ public class TestMechTest {
 							res.setContentType("text/plain; charset=utf-8");
 							res.getWriter()
 									.write(name + "XXX" + file.getName());
-						}));
+						}))) {
 
-		TestMechResponse res = mech.postMultipart("/postMultipart")
-				.param("name", "pp太郎").file("file", new File("pom.xml"))
-				.execute();
-		res.assertSuccess();
-		res.assertContentEquals("pp太郎XXXpom.xml");
+			TestMechResponse res = mech.postMultipart("/postMultipart")
+					.param("name", "pp太郎").file("file", new File("pom.xml"))
+					.execute();
+			res.assertSuccess();
+			res.assertContentEquals("pp太郎XXXpom.xml");
+		}
 	}
 }

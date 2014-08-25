@@ -14,7 +14,7 @@ import org.eclipse.jetty.servlet.ServletHolder;
  * @author tokuhirom
  *
  */
-public class TestMechJettyServlet extends TestMech {
+public class TestMechJettyServlet extends TestMech implements AutoCloseable {
 	private Server server;
 
 	public TestMechJettyServlet(Class<? extends Servlet> servlet) {
@@ -52,4 +52,12 @@ public class TestMechJettyServlet extends TestMech {
 		server.setStopAtShutdown(true);
 		return server;
 	}
+
+	@Override
+	public void close() throws Exception {
+		if (this.server != null) {
+			this.server.stop();
+		}
+	}
+
 }
