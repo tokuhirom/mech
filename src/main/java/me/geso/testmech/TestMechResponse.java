@@ -1,11 +1,11 @@
 package me.geso.testmech;
 
 import static org.hamcrest.CoreMatchers.both;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.lessThan;
 
 import java.nio.charset.Charset;
 
-import org.apache.http.Header;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.entity.ContentType;
 import org.hamcrest.CoreMatchers;
