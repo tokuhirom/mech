@@ -7,10 +7,12 @@ import static org.hamcrest.Matchers.lessThan;
 import java.nio.charset.Charset;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -18,9 +20,11 @@ public class TestMechResponse {
 
 	private final CloseableHttpResponse response;
 	private final byte[] content;
+	private final TestMechRequest request;
 
-	public TestMechResponse(CloseableHttpResponse response,
+	public TestMechResponse(TestMechRequest request, CloseableHttpResponse response,
 			byte[] content) {
+		this.request = request;
 		this.response = response;
 		this.content = content;
 	}
@@ -43,6 +47,7 @@ public class TestMechResponse {
 		return new String(this.content, contentType.getCharset());
 	}
 
+	@JsonIgnore
 	public String getContentString(Charset charset) {
 		return new String(getContent(), charset);
 	}
@@ -91,12 +96,17 @@ public class TestMechResponse {
 		Assert.assertThat(this.getContentString(), CoreMatchers.containsString(substring));
 	}
 
+	@JsonIgnore
 	public CloseableHttpResponse getResponse() {
 		return response;
 	}
 
 	public byte[] getContent() {
 		return content;
+	}
+
+	public TestMechRequest getRequest() {
+		return request;
 	}
 
 }

@@ -56,6 +56,4 @@ public class TestMechPostMultipartFormRequest {
 			throw new RuntimeException(e);
 		}
 	}
-	// TODO: setMaxRedirectCount
-	// TODO: assertTitleContains?
 }

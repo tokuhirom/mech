@@ -7,6 +7,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
@@ -351,6 +353,28 @@ public class TestMechTest {
 			mech.setHeader("X-Foo", "Bar");
 			TestMechResponse res = mech.get("/").disableRedirectHandling().execute();
 			res.assertStatusEquals(302);
+		}
+	}
+
+	@Test
+	public void testDump() throws UnsupportedEncodingException,
+			FileUploadException, IOException, Exception {
+		try (TestMechJettyServlet mech = new TestMechJettyServlet(
+				new CallbackServlet(
+						(req, res) -> {
+							req.setCharacterEncoding("UTF-8");
+							res.setCharacterEncoding("UTF-8");
+							if (req.getPathInfo().equals("/")) {
+								res.sendRedirect("/x");
+							} else {
+								res.getWriter().write("HAHA");
+							}
+						}))) {
+		    Path tempDir = Files.createTempDirectory("tempfiles");
+			System.setProperty("testmech.dump", tempDir.toString());
+			mech.get("/").disableRedirectHandling().execute();
+			File[] listFiles = tempDir.toFile().listFiles();
+			assertEquals(1, listFiles.length); // generated 1 file.
 		}
 	}
 }
