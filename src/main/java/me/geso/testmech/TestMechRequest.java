@@ -59,6 +59,8 @@ public class TestMechRequest {
 	}
 
 	public TestMechResponse execute() {
+		String dump = System.getProperty("testmech.dump");
+
 		try (CloseableHttpClient httpclient = this.httpClientBuilder.build()) {
 			try (CloseableHttpResponse response = httpclient
 					.execute(request)) {
@@ -69,7 +71,6 @@ public class TestMechRequest {
 				TestMechResponse mechResponse = new TestMechResponse(this,
 						response, byteArray);
 				// undocumented feature!
-				String dump = System.getProperty("testmech.dump");
 				if (dump != null) {
 					Path path = Paths.get(dump);
 					String baseName =

@@ -16,6 +16,7 @@ import org.apache.http.message.HeaderGroup;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 public class TestMech {
 	private final BasicCookieStore cookieStore = new BasicCookieStore();
@@ -32,9 +33,10 @@ public class TestMech {
 	public void setHeader(String name, String value) {
 		this.defaultHeaders.updateHeader(new BasicHeader(name, value));
 	}
-	
+
 	public void setUserAgent(String userAgent) {
-		this.defaultHeaders.updateHeader(new BasicHeader("User-Agent", userAgent));
+		this.defaultHeaders.updateHeader(new BasicHeader("User-Agent",
+				userAgent));
 	}
 
 	public void setBaseURL(String baseURL) {
@@ -93,8 +95,8 @@ public class TestMech {
 		}
 
 		try {
-			ObjectMapper mapper = new ObjectMapper();
-			mapper.configure(JsonGenerator.Feature.ESCAPE_NON_ASCII, true);
+			ObjectMapper mapper = this.createObjectMapper();
+
 			byte[] json = mapper.writeValueAsBytes(params);
 			URI url = makeURI(path);
 			HttpPost post = new HttpPost(url);
@@ -106,6 +108,13 @@ public class TestMech {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	public ObjectMapper createObjectMapper() {
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.configure(JsonGenerator.Feature.ESCAPE_NON_ASCII, true);
+		mapper.enable(SerializationFeature.INDENT_OUTPUT);
+		return mapper;
 	}
 
 	public <T> TestMechRequest post(String path, HttpEntity entity) {
