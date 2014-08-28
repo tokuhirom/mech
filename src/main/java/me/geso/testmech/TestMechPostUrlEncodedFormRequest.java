@@ -35,7 +35,6 @@ public class TestMechPostUrlEncodedFormRequest {
 	public TestMechResponse execute() {
 		try {
 			UrlEncodedFormEntity entity = new UrlEncodedFormEntity(params, this.charset);
-			System.out.println(entity.getContentEncoding());
 			post.setEntity(entity);
 			TestMechRequest request = new TestMechRequest(
 					testMech.getCookieStore(), post);
