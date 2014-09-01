@@ -77,7 +77,6 @@ public class MechResponse implements AutoCloseable {
 	public byte[] getContent() {
 		if (content == null) {
 			try {
-				System.out.println("CLOOOSE");
 				ByteArrayOutputStream stream = new ByteArrayOutputStream();
 				response.getEntity().writeTo(stream);
 				content = stream.toByteArray();
@@ -94,7 +93,6 @@ public class MechResponse implements AutoCloseable {
 
 	@Override
 	public void close() throws Exception {
-		System.out.println("CLOOSE!!!");
 		if (this.httpClient != null) {
 			this.httpClient.close();
 		}
