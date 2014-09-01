@@ -30,6 +30,7 @@ public class TestMech {
 
 	public TestMech() {
 		this.httpClientBuilder = HttpClientBuilder.create();
+		this.httpClientBuilder.setDefaultCookieStore(cookieStore);
 	}
 
 	public TestMech(String baseURL) {
