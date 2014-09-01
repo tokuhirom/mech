@@ -367,26 +367,4 @@ public class MechTest {
 		}
 	}
 
-	@Test
-	public void testDump() throws UnsupportedEncodingException,
-			FileUploadException, IOException, Exception {
-		try (MechJettyServlet mech = new MechJettyServlet(
-				new CallbackServlet(
-						(req, res) -> {
-							req.setCharacterEncoding("UTF-8");
-							res.setCharacterEncoding("UTF-8");
-							if (req.getPathInfo().equals("/")) {
-								res.sendRedirect("/x");
-							} else {
-								res.getWriter().write("HAHA");
-							}
-						}))) {
-			Path tempDir = Files.createTempDirectory("tempfiles");
-			System.setProperty("testmech.dump", tempDir.toString());
-			mech.disableRedirectHandling();
-			mech.get("/").execute();
-			File[] listFiles = tempDir.toFile().listFiles();
-			assertEquals(1, listFiles.length); // generated 1 file.
-		}
-	}
 }
