@@ -1,6 +1,5 @@
 package me.geso.mech;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -189,7 +188,7 @@ public class MechTest {
 						}))) {
 			MechResponse res = mech.get("/textsjis").execute();
 			assertEquals(res.getStatus(), 200);
-			assertThat(res.getContentString()).isEqualTo("田中");
+			assertEquals(res.getContentString(), "田中");
 		}
 	}
 
