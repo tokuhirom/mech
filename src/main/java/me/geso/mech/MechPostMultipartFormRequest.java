@@ -1,4 +1,4 @@
-package me.geso.testmech;
+package me.geso.mech;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -9,48 +9,48 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.FileBody;
 
-public class TestMechPostMultipartFormRequest {
+public class MechPostMultipartFormRequest {
 
-	private final TestMech testMech;
+	private final Mech testMech;
 	private final HttpPost post;
 	private MultipartEntityBuilder builder;
 	private Charset charset;
 
-	public TestMechPostMultipartFormRequest(TestMech testMech, HttpPost post) {
+	public MechPostMultipartFormRequest(Mech testMech, HttpPost post) {
 		this.testMech = testMech;
 		this.post = post;
 		this.charset = Charset.forName("UTF-8");
 		this.builder = MultipartEntityBuilder.create().setCharset(charset);
 	}
 
-	public TestMechPostMultipartFormRequest setCharset(Charset charset) {
+	public MechPostMultipartFormRequest setCharset(Charset charset) {
 		this.charset = charset;
 		this.builder.setCharset(charset);
 		return this;
 	}
 
-	public TestMechPostMultipartFormRequest param(String name, String text) {
+	public MechPostMultipartFormRequest param(String name, String text) {
 		ContentType contentType = ContentType
 				.create("text/plain", this.charset);
 		this.builder.addTextBody(name, text, contentType);
 		return this;
 	}
 
-	public TestMechPostMultipartFormRequest param(String name, byte[] b) {
+	public MechPostMultipartFormRequest param(String name, byte[] b) {
 		this.builder.addBinaryBody(name, b);
 		return this;
 	}
 
-	public TestMechPostMultipartFormRequest file(String name, File file) {
+	public MechPostMultipartFormRequest file(String name, File file) {
 		this.builder.addPart(name, new FileBody(file));
 		return this;
 	}
 
-	public TestMechResponse execute() {
+	public MechResponse execute() {
 		try {
 			HttpEntity entity = this.builder.build();
 			post.setEntity(entity);
-			TestMechRequest request = new TestMechRequest(
+			MechRequest request = new MechRequest(
 					testMech, post);
 			return request.execute();
 		} catch (Exception e) {

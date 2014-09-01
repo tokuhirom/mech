@@ -3,10 +3,10 @@
 
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>me.geso</groupId>
-	<artifactId>testmech</artifactId>
-	<version>0.4.7-SNAPSHOT</version>
-	<name>testmech</name>
-	<description>testmech</description>
+	<artifactId>mech</artifactId>
+	<version>0.4.8-SNAPSHOT</version>
+	<name>mech</name>
+	<description>mech</description>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -21,9 +21,9 @@
 	</repositories>
 
 	<scm>
-		<url>https://github.com/tokuhirom/testmech/</url>
-		<connection>scm:git:git://github.com/tokuhirom/testmech.git</connection>
-		<developerConnection>scm:git:git@github.com:tokuhirom/testmech.git</developerConnection>
+		<url>https://github.com/tokuhirom/mech/</url>
+		<connection>scm:git:git://github.com/tokuhirom/mech.git</connection>
+		<developerConnection>scm:git:git@github.com:tokuhirom/mech.git</developerConnection>
 	</scm>
 
 	<distributionManagement>

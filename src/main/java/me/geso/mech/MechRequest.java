@@ -1,4 +1,4 @@
-package me.geso.testmech;
+package me.geso.mech;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -7,12 +7,9 @@ import java.net.URLEncoder;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import org.apache.http.client.CookieStore;
-import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -23,12 +20,12 @@ import com.fasterxml.jackson.databind.SerializationFeature;
  * @author tokuhirom
  *
  */
-public class TestMechRequest {
+public class MechRequest {
 
 	private HttpRequestBase request;
-	private final TestMech mech;
+	private final Mech mech;
 
-	public TestMechRequest(TestMech mech, HttpRequestBase request) {
+	public MechRequest(Mech mech, HttpRequestBase request) {
 		this.request = request;
 		this.mech = mech;
 	}
@@ -37,29 +34,17 @@ public class TestMechRequest {
 		return this.request.getMethod();
 	}
 
-	public TestMechRequest setHeader(String name, String value) {
+	public MechRequest setHeader(String name, String value) {
 		this.request.setHeader(name, value);
 		return this;
 	}
 
-	public TestMechRequest addHeader(String name, String value) {
+	public MechRequest addHeader(String name, String value) {
 		this.request.addHeader(name, value);
 		return this;
 	}
 
-	@Deprecated
-	public TestMechRequest disableRedirectHandling() {
-		this.mech.getHttpClientBuilder().disableRedirectHandling();
-		return this;
-	}
-
-	@Deprecated
-	public TestMechRequest setRequestConfig(RequestConfig requestConfig) {
-		this.mech.getHttpClientBuilder().setDefaultRequestConfig(requestConfig);
-		return this;
-	}
-
-	public TestMechResponse execute() {
+	public MechResponse execute() {
 		String dump = System.getProperty("testmech.dump");
 
 		try (CloseableHttpClient httpclient = this.mech.getHttpClientBuilder().build()) {
@@ -69,7 +54,7 @@ public class TestMechRequest {
 				response.getEntity().writeTo(stream);
 				byte[] byteArray = stream.toByteArray();
 
-				TestMechResponse mechResponse = new TestMechResponse(this,
+				MechResponse mechResponse = new MechResponse(this,
 						response, byteArray);
 				// undocumented feature!
 				if (dump != null) {

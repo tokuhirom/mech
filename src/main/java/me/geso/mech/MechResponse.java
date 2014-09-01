@@ -1,28 +1,21 @@
-package me.geso.testmech;
-
-import static org.hamcrest.CoreMatchers.both;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.lessThan;
+package me.geso.mech;
 
 import java.nio.charset.Charset;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
-import org.hamcrest.CoreMatchers;
-import org.junit.Assert;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class TestMechResponse {
+public class MechResponse {
 
 	private final CloseableHttpResponse response;
 	private final byte[] content;
-	private final TestMechRequest request;
+	private final MechRequest request;
 
-	public TestMechResponse(TestMechRequest request, CloseableHttpResponse response,
+	public MechResponse(MechRequest request, CloseableHttpResponse response,
 			byte[] content) {
 		this.request = request;
 		this.response = response;
@@ -70,32 +63,6 @@ public class TestMechResponse {
 		}
 	}
 
-	public void assertSuccess() {
-		int status = getStatus();
-		Assert.assertThat(status, both(greaterThanOrEqualTo(200)).and(lessThan(300)));
-	}
-
-	public void assertStatusEquals(int statusCode) {
-		int actual = getStatus();
-		Assert.assertEquals(statusCode, actual);
-	}
-
-	public void assertContentTypeMimeTypeEquals(String mimeType) {
-		Assert.assertThat(this.getContentType().getMimeType(), CoreMatchers.equalTo(mimeType));
-	}
-
-	public void assertContentEquals(String s) {
-		Assert.assertThat(this.getContentString(), CoreMatchers.equalTo(s));
-	}
-
-	public void assertContentTypeCharsetEquals(String charsetName) {
-		Assert.assertThat(this.getContentType().getCharset(), CoreMatchers.equalTo(Charset.forName(charsetName)));
-	}
-
-	public void assertContentContains(String substring) {
-		Assert.assertThat(this.getContentString(), CoreMatchers.containsString(substring));
-	}
-
 	@JsonIgnore
 	public CloseableHttpResponse getResponse() {
 		return response;
@@ -105,7 +72,7 @@ public class TestMechResponse {
 		return content;
 	}
 
-	public TestMechRequest getRequest() {
+	public MechRequest getRequest() {
 		return request;
 	}
 

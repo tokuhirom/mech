@@ -1,4 +1,4 @@
-package me.geso.testmech;
+package me.geso.mech;
 
 import javax.servlet.Servlet;
 
@@ -14,15 +14,15 @@ import org.eclipse.jetty.servlet.ServletHolder;
  * @author tokuhirom
  *
  */
-public class TestMechJettyServlet extends TestMech implements AutoCloseable {
+public class MechJettyServlet extends Mech implements AutoCloseable {
 	private Server server;
 
-	public TestMechJettyServlet(Class<? extends Servlet> servlet) {
+	public MechJettyServlet(Class<? extends Servlet> servlet) {
 		ServletHolder servletHolder = new ServletHolder(servlet);
 		this.initialize(servletHolder);
 	}
 
-	public TestMechJettyServlet(Servlet servlet) {
+	public MechJettyServlet(Servlet servlet) {
 		ServletHolder servletHolder = new ServletHolder(servlet);
 		this.initialize(servletHolder);
 	}

@@ -1,4 +1,4 @@
-package me.geso.testmech;
+package me.geso.mech;
 
 import java.net.URI;
 
@@ -22,18 +22,18 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
-public class TestMech {
+public class Mech {
 	private String baseURL;
 	private final HeaderGroup defaultHeaders = new HeaderGroup();
 	private final HttpClientBuilder httpClientBuilder;
 	private CookieStore cookieStore = new BasicCookieStore();
 
-	public TestMech() {
+	public Mech() {
 		this.httpClientBuilder = HttpClientBuilder.create();
 		this.httpClientBuilder.setDefaultCookieStore(cookieStore);
 	}
 
-	public TestMech(String baseURL) {
+	public Mech(String baseURL) {
 		this.baseURL = baseURL;
 		this.httpClientBuilder = HttpClientBuilder.create();
 		this.httpClientBuilder.setDefaultCookieStore(cookieStore);
@@ -83,12 +83,12 @@ public class TestMech {
 		}
 	}
 
-	public TestMechRequest get(String pathQuery) {
+	public MechRequest get(String pathQuery) {
 		try {
 			URI url = makeURI(pathQuery);
 			HttpGet get = new HttpGet(url);
 			this.setDefaultHeaders(get);
-			return new TestMechRequest(this, get);
+			return new MechRequest(this, get);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -102,17 +102,17 @@ public class TestMech {
 		}
 	}
 
-	public TestMech disableRedirectHandling() {
+	public Mech disableRedirectHandling() {
 		this.getHttpClientBuilder().disableRedirectHandling();
 		return this;
 	}
 
-	public TestMech setRequestConfig(RequestConfig requestConfig) {
+	public Mech setRequestConfig(RequestConfig requestConfig) {
 		this.getHttpClientBuilder().setDefaultRequestConfig(requestConfig);
 		return this;
 	}
 
-	public <T> TestMechRequest postJSON(String path, T params) {
+	public <T> MechRequest postJSON(String path, T params) {
 		if (params == null) {
 			throw new RuntimeException("Params should not be null");
 		}
@@ -127,7 +127,7 @@ public class TestMech {
 			post.setHeader("Content-Type",
 					"application/json; charset=utf-8");
 			post.setEntity(new ByteArrayEntity(json));
-			return new TestMechRequest(this, post);
+			return new MechRequest(this, post);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -140,7 +140,7 @@ public class TestMech {
 		return mapper;
 	}
 
-	public <T> TestMechRequest post(String path, HttpEntity entity) {
+	public <T> MechRequest post(String path, HttpEntity entity) {
 		if (entity == null) {
 			throw new RuntimeException("Entity should not be null");
 		}
@@ -152,33 +152,33 @@ public class TestMech {
 			HttpPost post = new HttpPost(url);
 			this.setDefaultHeaders(post);
 			post.setEntity(entity);
-			return new TestMechRequest(this, post);
+			return new MechRequest(this, post);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	public <T> TestMechPostUrlEncodedFormRequest post(String path) {
+	public <T> MechPostUrlEncodedFormRequest post(String path) {
 		try {
 			ObjectMapper mapper = new ObjectMapper();
 			mapper.configure(JsonGenerator.Feature.ESCAPE_NON_ASCII, true);
 			URI url = makeURI(path);
 			HttpPost post = new HttpPost(url);
 			this.setDefaultHeaders(post);
-			return new TestMechPostUrlEncodedFormRequest(this, post);
+			return new MechPostUrlEncodedFormRequest(this, post);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	public <T> TestMechPostMultipartFormRequest postMultipart(String path) {
+	public <T> MechPostMultipartFormRequest postMultipart(String path) {
 		try {
 			ObjectMapper mapper = new ObjectMapper();
 			mapper.configure(JsonGenerator.Feature.ESCAPE_NON_ASCII, true);
 			URI url = makeURI(path);
 			HttpPost post = new HttpPost(url);
 			this.setDefaultHeaders(post);
-			return new TestMechPostMultipartFormRequest(this, post);
+			return new MechPostMultipartFormRequest(this, post);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
