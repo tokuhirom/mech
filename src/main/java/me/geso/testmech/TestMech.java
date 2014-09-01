@@ -5,12 +5,16 @@ import java.net.URI;
 import org.apache.http.Header;
 import org.apache.http.HeaderIterator;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHost;
+import org.apache.http.client.CookieStore;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.BasicCookieStore;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.HeaderGroup;
 
@@ -19,15 +23,23 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
 public class TestMech {
-	private final BasicCookieStore cookieStore = new BasicCookieStore();
 	private String baseURL;
 	private final HeaderGroup defaultHeaders = new HeaderGroup();
+	private final HttpClientBuilder httpClientBuilder;
+	private CookieStore cookieStore = new BasicCookieStore();
 
 	public TestMech() {
+		this.httpClientBuilder = HttpClientBuilder.create();
 	}
 
 	public TestMech(String baseURL) {
 		this.baseURL = baseURL;
+		this.httpClientBuilder = HttpClientBuilder.create();
+		this.httpClientBuilder.setDefaultCookieStore(cookieStore);
+	}
+	
+	public HttpClientBuilder getHttpClientBuilder() {
+		return this.httpClientBuilder;
 	}
 
 	public void setHeader(String name, String value) {
@@ -75,7 +87,7 @@ public class TestMech {
 			URI url = makeURI(pathQuery);
 			HttpGet get = new HttpGet(url);
 			this.setDefaultHeaders(get);
-			return new TestMechRequest(getCookieStore(), get);
+			return new TestMechRequest(this, get);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -87,6 +99,16 @@ public class TestMech {
 			Header header = iterator.nextHeader();
 			req.addHeader(header);
 		}
+	}
+
+	public TestMech disableRedirectHandling() {
+		this.getHttpClientBuilder().disableRedirectHandling();
+		return this;
+	}
+
+	public TestMech setRequestConfig(RequestConfig requestConfig) {
+		this.getHttpClientBuilder().setDefaultRequestConfig(requestConfig);
+		return this;
 	}
 
 	public <T> TestMechRequest postJSON(String path, T params) {
@@ -104,7 +126,7 @@ public class TestMech {
 			post.setHeader("Content-Type",
 					"application/json; charset=utf-8");
 			post.setEntity(new ByteArrayEntity(json));
-			return new TestMechRequest(getCookieStore(), post);
+			return new TestMechRequest(this, post);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -129,7 +151,7 @@ public class TestMech {
 			HttpPost post = new HttpPost(url);
 			this.setDefaultHeaders(post);
 			post.setEntity(entity);
-			return new TestMechRequest(getCookieStore(), post);
+			return new TestMechRequest(this, post);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -161,7 +183,11 @@ public class TestMech {
 		}
 	}
 
-	public BasicCookieStore getCookieStore() {
+	public void setProxy(HttpHost proxy) {
+		this.httpClientBuilder.setProxy(proxy);
+	}
+
+	public CookieStore getCookieStore() {
 		return cookieStore;
 	}
 }

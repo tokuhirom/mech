@@ -26,12 +26,11 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 public class TestMechRequest {
 
 	private HttpRequestBase request;
-	private final HttpClientBuilder httpClientBuilder;
+	private final TestMech mech;
 
-	public TestMechRequest(CookieStore cookieStore, HttpRequestBase request) {
+	public TestMechRequest(TestMech mech, HttpRequestBase request) {
 		this.request = request;
-		this.httpClientBuilder = HttpClientBuilder.create();
-		this.httpClientBuilder.setDefaultCookieStore(cookieStore);
+		this.mech = mech;
 	}
 
 	public String getMethod() {
@@ -48,20 +47,22 @@ public class TestMechRequest {
 		return this;
 	}
 
+	@Deprecated
 	public TestMechRequest disableRedirectHandling() {
-		this.httpClientBuilder.disableRedirectHandling();
+		this.mech.getHttpClientBuilder().disableRedirectHandling();
 		return this;
 	}
 
+	@Deprecated
 	public TestMechRequest setRequestConfig(RequestConfig requestConfig) {
-		this.httpClientBuilder.setDefaultRequestConfig(requestConfig);
+		this.mech.getHttpClientBuilder().setDefaultRequestConfig(requestConfig);
 		return this;
 	}
 
 	public TestMechResponse execute() {
 		String dump = System.getProperty("testmech.dump");
 
-		try (CloseableHttpClient httpclient = this.httpClientBuilder.build()) {
+		try (CloseableHttpClient httpclient = this.mech.getHttpClientBuilder().build()) {
 			try (CloseableHttpResponse response = httpclient
 					.execute(request)) {
 				ByteArrayOutputStream stream = new ByteArrayOutputStream();

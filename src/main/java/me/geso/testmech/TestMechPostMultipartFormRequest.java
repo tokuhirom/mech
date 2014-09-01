@@ -22,7 +22,7 @@ public class TestMechPostMultipartFormRequest {
 		this.charset = Charset.forName("UTF-8");
 		this.builder = MultipartEntityBuilder.create().setCharset(charset);
 	}
-	
+
 	public TestMechPostMultipartFormRequest setCharset(Charset charset) {
 		this.charset = charset;
 		this.builder.setCharset(charset);
@@ -30,7 +30,8 @@ public class TestMechPostMultipartFormRequest {
 	}
 
 	public TestMechPostMultipartFormRequest param(String name, String text) {
-		ContentType contentType = ContentType.create("text/plain", this.charset);
+		ContentType contentType = ContentType
+				.create("text/plain", this.charset);
 		this.builder.addTextBody(name, text, contentType);
 		return this;
 	}
@@ -50,7 +51,7 @@ public class TestMechPostMultipartFormRequest {
 			HttpEntity entity = this.builder.build();
 			post.setEntity(entity);
 			TestMechRequest request = new TestMechRequest(
-					testMech.getCookieStore(), post);
+					testMech, post);
 			return request.execute();
 		} catch (Exception e) {
 			throw new RuntimeException(e);

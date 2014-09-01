@@ -128,7 +128,9 @@ public class TestMechTest {
 			Form form = new Form("hoge");
 			TestMechResponse res = mech.postJSON("/json", form).execute();
 			res.assertSuccess();
-			res.assertContentEquals("+++{\"name\":\"hoge\"}+++");
+			assertEquals(res.getContentString(), "+++{\n"
+					+ "  \"name\" : \"hoge\"\n"
+					+ "}+++");
 		}
 	}
 
@@ -152,7 +154,7 @@ public class TestMechTest {
 			TestMechResponse res = mech.postJSON("/json?foo=bar", form)
 					.execute();
 			res.assertSuccess();
-			res.assertContentEquals("+++{\"name\":\"hoge\"}+++");
+			assertEquals(res.getContentString(), "+++{\n  \"name\" : \"hoge\"\n}+++");
 		}
 	}
 
@@ -337,7 +339,8 @@ public class TestMechTest {
 	}
 
 	@Test
-	public void testDisableRedirectHandling() throws UnsupportedEncodingException,
+	public void testDisableRedirectHandling()
+			throws UnsupportedEncodingException,
 			FileUploadException, IOException, Exception {
 		try (TestMechJettyServlet mech = new TestMechJettyServlet(
 				new CallbackServlet(
@@ -351,7 +354,8 @@ public class TestMechTest {
 							}
 						}))) {
 			mech.setHeader("X-Foo", "Bar");
-			TestMechResponse res = mech.get("/").disableRedirectHandling().execute();
+			mech.disableRedirectHandling();
+			TestMechResponse res = mech.get("/").execute();
 			res.assertStatusEquals(302);
 		}
 	}
@@ -370,9 +374,10 @@ public class TestMechTest {
 								res.getWriter().write("HAHA");
 							}
 						}))) {
-		    Path tempDir = Files.createTempDirectory("tempfiles");
+			Path tempDir = Files.createTempDirectory("tempfiles");
 			System.setProperty("testmech.dump", tempDir.toString());
-			mech.get("/").disableRedirectHandling().execute();
+			mech.disableRedirectHandling();
+			mech.get("/").execute();
 			File[] listFiles = tempDir.toFile().listFiles();
 			assertEquals(1, listFiles.length); // generated 1 file.
 		}

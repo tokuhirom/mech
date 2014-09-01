@@ -21,7 +21,7 @@ public class TestMechPostUrlEncodedFormRequest {
 		this.params = new ArrayList<NameValuePair>();
 		this.charset = Charset.forName("UTF-8");
 	}
-	
+
 	public TestMechPostUrlEncodedFormRequest setCharset(Charset charset) {
 		this.charset = charset;
 		return this;
@@ -34,10 +34,11 @@ public class TestMechPostUrlEncodedFormRequest {
 
 	public TestMechResponse execute() {
 		try {
-			UrlEncodedFormEntity entity = new UrlEncodedFormEntity(params, this.charset);
+			UrlEncodedFormEntity entity = new UrlEncodedFormEntity(params,
+					this.charset);
 			post.setEntity(entity);
 			TestMechRequest request = new TestMechRequest(
-					testMech.getCookieStore(), post);
+					testMech, post);
 			return request.execute();
 		} catch (Exception e) {
 			throw new RuntimeException(e);
