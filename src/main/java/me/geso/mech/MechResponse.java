@@ -1,6 +1,7 @@
 package me.geso.mech;
 
 import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
@@ -13,14 +14,15 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class MechResponse implements AutoCloseable {
+public class MechResponse implements Closeable {
 
 	private final CloseableHttpResponse response;
 	private byte[] content;
 	private final MechRequest request;
 	private final CloseableHttpClient httpClient;
 
-	public MechResponse(MechRequest request, CloseableHttpClient httpClient, CloseableHttpResponse response) {
+	public MechResponse(MechRequest request, CloseableHttpClient httpClient,
+			CloseableHttpResponse response) {
 		this.request = request;
 		this.httpClient = httpClient;
 		this.response = response;
@@ -91,13 +93,16 @@ public class MechResponse implements AutoCloseable {
 		return request;
 	}
 
-	@Override
-	public void close() throws Exception {
-		if (this.httpClient != null) {
-			this.httpClient.close();
-		}
-		if (this.response != null) {
-			this.response.close();
+	public void close() {
+		try {
+			if (this.httpClient != null) {
+				this.httpClient.close();
+			}
+			if (this.response != null) {
+				this.response.close();
+			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
 	}
 
