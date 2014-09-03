@@ -2,8 +2,11 @@ package me.geso.mech;
 
 import java.io.IOException;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.entity.BufferedHttpEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 
 /**
@@ -38,8 +41,27 @@ public class MechRequest {
 
 	public MechResponse execute() {
 		try {
-			CloseableHttpClient httpclient = this.mech.getHttpClientBuilder().build();
+			if (this.mech.hasRequestListener()) {
+				// buffer the entity for request listener.
+				// I want to use entity body in the logger.
+				if (request instanceof HttpEntityEnclosingRequestBase) {
+					HttpEntity entity = ((HttpEntityEnclosingRequestBase) request)
+							.getEntity();
+					((HttpEntityEnclosingRequestBase) request)
+							.setEntity(new BufferedHttpEntity(entity));
+				}
+			}
+			CloseableHttpClient httpclient = this.mech.getHttpClientBuilder()
+					.build();
 			CloseableHttpResponse response = httpclient.execute(request);
+			if (this.mech.hasRequestListener()) {
+				// buffer the entity for request listener.
+				// I want to use entity body in the logger.
+				HttpEntity entity = response
+						.getEntity();
+				response.setEntity(new BufferedHttpEntity(entity));
+			}
+			this.mech.callRequestListener(request, response);
 			return new MechResponse(this, httpclient, response);
 		} catch (IOException e) {
 			throw new RuntimeException(e);

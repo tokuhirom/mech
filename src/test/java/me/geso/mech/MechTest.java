@@ -3,8 +3,10 @@ package me.geso.mech;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.List;
@@ -23,6 +25,11 @@ import org.apache.commons.fileupload.FileItemFactory;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpEntityEnclosingRequest;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -362,4 +369,80 @@ public class MechTest {
 		}
 	}
 
+	@Test
+	public void testRequestListener()
+			throws UnsupportedEncodingException,
+			FileUploadException, IOException, Exception {
+		try (MechJettyServlet mech = new MechJettyServlet(
+				new CallbackServlet(
+						(req, res) -> {
+							req.setCharacterEncoding("UTF-8");
+							res.setCharacterEncoding("UTF-8");
+							res.getWriter().write("HAHA");
+						}))) {
+			mech.addRequestListener((req, res) -> {
+				try {
+					final PrintStream out = System.out;
+					out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> REQUEST");
+					out.println(req.getRequestLine().toString());
+					for (Header header : req.getAllHeaders()) {
+						out.println(header);
+					}
+					if (req instanceof HttpEntityEnclosingRequest) {
+						out.println("");
+						byte[] bytes = EntityUtils
+								.toByteArray(((HttpEntityEnclosingRequest) req)
+										.getEntity());
+						out.write(bytes);
+					}
+
+					out.println("");
+					out.println("");
+					out.println("RESPONSE <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+					out.println(res.getStatusLine());
+					for (Header header : res.getAllHeaders()) {
+						out.println(header);
+					}
+					out.println("");
+					HttpEntity entity = res.getEntity();
+					byte[] bytes = EntityUtils
+							.toByteArray(entity);
+					out.write(bytes);
+					out.println("");
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				}
+			});
+			mech.setHeader("X-Foo", "Bar");
+			MechResponse res = mech.post("/x",
+					new StringEntity("hogehoge=fugafuga", "UTF-8")).execute();
+			assertEquals(res.getStatusCode(), 200);
+			assertEquals(res.getContentString(), "HAHA");
+		}
+	}
+
+	@Test
+	public void testPrintRequestListener()
+			throws UnsupportedEncodingException,
+			FileUploadException, IOException, Exception {
+		try (MechJettyServlet mech = new MechJettyServlet(
+				new CallbackServlet(
+						(req, res) -> {
+							req.setCharacterEncoding("UTF-8");
+							res.setCharacterEncoding("UTF-8");
+							res.getWriter().write("HAHA");
+						}))) {
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			PrintStream ps = new PrintStream(baos);
+			mech.addRequestListener(new PrintRequestListener(ps));
+			mech.setHeader("X-Foo", "Bar");
+			MechResponse res = mech.post("/x",
+					new StringEntity("hogehoge=fugafuga", "UTF-8")).execute();
+			assertEquals(res.getStatusCode(), 200);
+			assertEquals(res.getContentString(), "HAHA");
+			String output = baos.toString("UTF8");
+			assertTrue(output.contains("HAHA"));
+			assertTrue(output.contains("hogehoge=fugafuga"));
+		}
+	}
 }

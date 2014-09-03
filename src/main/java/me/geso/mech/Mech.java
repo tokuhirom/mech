@@ -1,11 +1,14 @@
 package me.geso.mech;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.http.Header;
 import org.apache.http.HeaderIterator;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
+import org.apache.http.HttpResponse;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
@@ -27,6 +30,7 @@ public class Mech {
 	private final HeaderGroup defaultHeaders = new HeaderGroup();
 	private final HttpClientBuilder httpClientBuilder;
 	private CookieStore cookieStore = new BasicCookieStore();
+	private List<MechRequestListener> requestListeners;
 
 	public Mech() {
 		this.httpClientBuilder = HttpClientBuilder.create();
@@ -38,7 +42,7 @@ public class Mech {
 		this.httpClientBuilder = HttpClientBuilder.create();
 		this.httpClientBuilder.setDefaultCookieStore(cookieStore);
 	}
-	
+
 	public HttpClientBuilder getHttpClientBuilder() {
 		return this.httpClientBuilder;
 	}
@@ -190,5 +194,26 @@ public class Mech {
 
 	public CookieStore getCookieStore() {
 		return cookieStore;
+	}
+
+	public boolean hasRequestListener() {
+		return this.requestListeners != null;
+	}
+
+	// Experimental
+	public void addRequestListener(MechRequestListener listener) {
+		if (this.requestListeners == null) {
+			this.requestListeners = new ArrayList<>();
+		}
+		this.requestListeners.add(listener);
+	}
+
+	void callRequestListener(HttpRequestBase request,
+			HttpResponse response) {
+		if (this.requestListeners != null) {
+			for (MechRequestListener listener : this.requestListeners) {
+				listener.call(request, response);
+			}
+		}
 	}
 }
