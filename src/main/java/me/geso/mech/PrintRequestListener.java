@@ -9,6 +9,10 @@ import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+
 /**
  * Print request/response to the log. This is useful when you are debugging.
  * 
@@ -17,6 +21,7 @@ import org.apache.http.util.EntityUtils;
  */
 public class PrintRequestListener implements MechRequestListener {
 	private PrintStream out;
+	private boolean jsonPrettyPrintFilterEnabled;
 
 	/**
 	 * Create instance with System.out. This will write the log to stdout.
@@ -27,6 +32,11 @@ public class PrintRequestListener implements MechRequestListener {
 
 	public PrintRequestListener(PrintStream out) {
 		this.out = out;
+	}
+
+	public PrintRequestListener enableJsonPrettyPrintFilter() {
+		this.jsonPrettyPrintFilterEnabled = true;
+		return this;
 	}
 
 	@Override
@@ -56,6 +66,19 @@ public class PrintRequestListener implements MechRequestListener {
 			HttpEntity entity = res.getEntity();
 			byte[] bytes = EntityUtils
 					.toByteArray(entity);
+			if (this.jsonPrettyPrintFilterEnabled) {
+				Header contentType = res.getFirstHeader("Content-Type");
+				System.out.println(contentType.toString());
+				System.out.println(contentType.getValue());
+				if (contentType != null
+						&& contentType.getValue().startsWith("application/json")) {
+					ObjectMapper mapper = new ObjectMapper();
+					mapper.enable(SerializationFeature.INDENT_OUTPUT);
+					JsonNode tree = mapper.readTree(bytes);
+					bytes = mapper.writeValueAsBytes(tree);
+					System.out.println(mapper.writeValueAsString(tree));
+				}
+			}
 			out.write(bytes);
 			out.println("");
 		} catch (Exception e) {
