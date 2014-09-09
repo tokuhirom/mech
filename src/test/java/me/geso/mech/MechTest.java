@@ -1,25 +1,6 @@
 package me.geso.mech;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
-import java.util.List;
-import java.util.Map;
-
-import javax.servlet.ServletException;
-import javax.servlet.ServletInputStream;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileItemFactory;
 import org.apache.commons.fileupload.FileUploadException;
@@ -32,445 +13,420 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import javax.servlet.ServletInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class MechTest {
 
-	@FunctionalInterface
-	public static interface ServletCallback {
-		public void service(HttpServletRequest sreq, HttpServletResponse sres)
-				throws Exception;
-	}
+    public static class Form {
+        String name;
 
-	public static class CallbackServlet extends HttpServlet {
-		private static final long serialVersionUID = 1L;
-		private final ServletCallback callback;
+        // dummy
+        public Form() {
+        }
 
-		public CallbackServlet(ServletCallback callback) {
-			this.callback = callback;
-		}
+        public Form(String name) {
+            this.name = name;
+        }
 
-		public void service(ServletRequest sreq, ServletResponse sres)
-				throws ServletException, IOException {
-			HttpServletRequest req = (HttpServletRequest) sreq;
-			HttpServletResponse res = (HttpServletResponse) sres;
-			try {
-				this.callback.service(req, res);
-			} catch (Exception ex) {
-				throw new RuntimeException(ex);
-			}
-		}
-	}
+        public String getName() {
+            return this.name;
+        }
 
-	public static class Form {
-		String name;
+        public void setName(String name) {
+            this.name = name;
+        }
+    }
 
-		// dummy
-		public Form() {
-		}
+    @Test
+    public void testRoot() throws Exception {
+        try (MechJettyServlet mech = new MechJettyServlet(
+                new CallbackServlet(
+                        (req, res) -> {
+                            res.setContentType("text/plain; charset=UTF-8");
+                            res.getWriter().write("heheh");
+                        }
+                )
+        )) {
+            try (MechResponse res = mech.get("/").execute()) {
+                assertEquals(res.getStatusCode(), 200);
+                assertEquals(res.getContentType().getMimeType(), "text/plain");
+                assertEquals(res.getContentType().getCharset().displayName(),
+                        "UTF-8");
+                assertTrue(res.getContentString().contains("heheh"));
+            }
+        }
+    }
 
-		public Form(String name) {
-			this.name = name;
-		}
+    @Test
+    public void testHoge() throws Exception {
+        try (MechJettyServlet mech = new MechJettyServlet(
+                new CallbackServlet(
+                        (req, res) -> {
+                            res.setContentType("application/x-iyan; charset=Shift_JIS");
+                            res.getWriter().write("hogehoge");
+                        }
+                )
+        )) {
+            try (MechResponse res = mech.get("/hogehoge").execute()) {
+                assertEquals(res.getStatusCode(), 200);
+                assertEquals(res.getContentType().getMimeType(),
+                        "application/x-iyan");
+                assertEquals(res.getContentType().getCharset().displayName(),
+                        "Shift_JIS");
+            }
+        }
+    }
 
-		public String getName() {
-			return this.name;
-		}
+    @Test
+    public void testJson() throws Exception {
+        try (MechJettyServlet mech = new MechJettyServlet(
+                new CallbackServlet(
+                        (req, res) -> {
+                            ServletInputStream inputStream = req
+                                    .getInputStream();
+                            try (java.util.Scanner s = new java.util.Scanner(
+                                    inputStream)) {
+                                s.useDelimiter("\\A");
+                                String buf = s.hasNext() ? s.next() : "";
 
-		public void setName(String name) {
-			this.name = name;
-		}
-	}
+                                res.setContentType("iyan");
+                                res.getWriter().write("+++" + buf + "+++");
+                            }
+                        }
+                )
+        )) {
+            Form form = new Form("hoge");
+            try (MechResponse res = mech.postJSON("/json", form).execute()) {
+                assertEquals(res.getStatusCode(), 200);
+                assertEquals(res.getContentString(), "+++{\n"
+                        + "  \"name\" : \"hoge\"\n"
+                        + "}+++");
+            }
+        }
+    }
 
-	@Test
-	public void testRoot() throws Exception {
-		try (MechJettyServlet mech = new MechJettyServlet(
-				new CallbackServlet(
-						(req, res) -> {
-							res.setContentType("text/plain; charset=UTF-8");
-							res.getWriter().write("heheh");
-						}))) {
-			MechResponse res = mech.get("/").execute();
-			assertEquals(res.getStatusCode(), 200);
-			assertEquals(res.getContentType().getMimeType(), "text/plain");
-			assertEquals(res.getContentType().getCharset().displayName(),
-					"UTF-8");
-			assertTrue(res.getContentString().contains("heheh"));
-		}
-	}
+    @Test
+    public void testJsonPathQuery() throws Exception {
+        try (MechJettyServlet mech = new MechJettyServlet(
+                new CallbackServlet(
+                        (req, res) -> {
+                            ServletInputStream inputStream = req
+                                    .getInputStream();
+                            try (java.util.Scanner s = new java.util.Scanner(
+                                    inputStream)) {
+                                s.useDelimiter("\\A");
+                                String buf = s.hasNext() ? s.next() : "";
 
-	@Test
-	public void testHoge() throws Exception {
-		try (MechJettyServlet mech = new MechJettyServlet(
-				new CallbackServlet(
-						(req, res) -> {
-							res.setContentType("application/x-iyan; charset=Shift_JIS");
-							res.getWriter().write("hogehoge");
-						}))) {
-			MechResponse res = mech.get("/hogehoge").execute();
-			assertEquals(res.getStatusCode(), 200);
-			assertEquals(res.getContentType().getMimeType(),
-					"application/x-iyan");
-			assertEquals(res.getContentType().getCharset().displayName(),
-					"Shift_JIS");
-		}
-	}
+                                res.setContentType("iyan");
+                                res.getWriter().write("+++" + buf + "+++");
+                            }
+                        }
+                )
+        )) {
+            Form form = new Form("hoge");
+            try (MechResponse res = mech.postJSON("/json?foo=bar", form)
+                    .execute()) {
+                // assertEquals(res.getStatusCode(), 200);
+                assertEquals(res.getContentString(),
+                        "+++{\n  \"name\" : \"hoge\"\n}+++");
+            }
+        }
+    }
 
-	@Test
-	public void testJson() throws Exception {
-		try (MechJettyServlet mech = new MechJettyServlet(
-				new CallbackServlet(
-						(req, res) -> {
-							ServletInputStream inputStream = req
-									.getInputStream();
-							try (java.util.Scanner s = new java.util.Scanner(
-									inputStream)) {
-								s.useDelimiter("\\A");
-								String buf = s.hasNext() ? s.next() : "";
+    @Test
+    public void testReadJsonWithTypeReference() throws Exception {
+        try (MechJettyServlet mech = new MechJettyServlet(
+                new CallbackServlet(
+                        (req, res) -> {
+                            res.getWriter().write("{\"name\":\"fuga\"}");
+                        }
+                )
+        )) {
+            try (MechResponse res = mech.get("/readJson").execute()) {
+                assertEquals(res.getStatusCode(), 200);
+                Form form = res.readJSON(new TypeReference<Form>() {
+                });
+                assertEquals(form.getName(), "fuga");
+            }
+        }
+    }
 
-								res.setContentType("iyan");
-								res.getWriter().write("+++" + buf + "+++");
-							}
-						}))) {
-			Form form = new Form("hoge");
-			MechResponse res = mech.postJSON("/json", form).execute();
-			assertEquals(res.getStatusCode(), 200);
-			assertEquals(res.getContentString(), "+++{\n"
-					+ "  \"name\" : \"hoge\"\n"
-					+ "}+++");
-		}
-	}
+    @Test
+    public void testSjis() throws Exception {
+        try (MechJettyServlet mech = new MechJettyServlet(
+                new CallbackServlet(
+                        (req, res) -> {
+                            String json = "田中";
+                            byte[] jsonBytes = json.getBytes(Charset
+                                    .forName("Shift_JIS"));
+                            res.setContentType("text/plain; charset=Shift_JIS");
+                            res.getOutputStream().write(jsonBytes);
+                        }
+                )
+        )) {
+            try (MechResponse res = mech.get("/textsjis").execute()) {
+                assertEquals(res.getStatusCode(), 200);
+                assertEquals(res.getContentString(), "田中");
+            }
+        }
+    }
 
-	@Test
-	public void testJsonPathQuery() throws Exception {
-		try (MechJettyServlet mech = new MechJettyServlet(
-				new CallbackServlet(
-						(req, res) -> {
-							ServletInputStream inputStream = req
-									.getInputStream();
-							try (java.util.Scanner s = new java.util.Scanner(
-									inputStream)) {
-								s.useDelimiter("\\A");
-								String buf = s.hasNext() ? s.next() : "";
+    @Test
+    public void testReadJsonUTF8() throws Exception {
+        try (MechJettyServlet mech = new MechJettyServlet(
+                new CallbackServlet(
+                        (req, res) -> {
+                            String json = "{\"name\":\"田中\"}";
+                            byte[] jsonBytes = json.getBytes(Charset
+                                    .forName("UTF-8"));
+                            res.getOutputStream().write(jsonBytes);
+                        }
+                )
+        )) {
+            try (MechResponse res = mech.get("/readJsonUTF8").execute()) {
+                assertEquals(res.getStatusCode(), 200);
+                Form form = res.readJSON(new TypeReference<Form>() {
+                });
+                assertEquals(form.getName(), "田中");
+            }
+        }
+    }
 
-								res.setContentType("iyan");
-								res.getWriter().write("+++" + buf + "+++");
-							}
-						}))) {
-			Form form = new Form("hoge");
-			try (MechResponse res = mech.postJSON("/json?foo=bar", form)
-					.execute()) {
-				// assertEquals(res.getStatusCode(), 200);
-				assertEquals(res.getContentString(),
-						"+++{\n  \"name\" : \"hoge\"\n}+++");
-			}
-		}
-	}
+    @Test
+    public void testReadJsonUTF8Number2() throws Exception {
+        try (MechJettyServlet mech = new MechJettyServlet(
+                new CallbackServlet(
+                        (req, res) -> {
+                            String json = "{\"data\":\"田中\"}";
+                            byte[] jsonBytes = json.getBytes(Charset
+                                    .forName("UTF-8"));
+                            res.getOutputStream().write(jsonBytes);
+                        }
+                )
+        )) {
+            try (MechResponse res = mech.get("/readJsonUTF8").execute()) {
+                assertEquals(res.getStatusCode(), 200);
+                ApiResponse<String> dat = res
+                        .readJSON(new TypeReference<ApiResponse<String>>() {
+                        });
+                assertEquals(dat.getData(), "田中");
+            }
+        }
+    }
 
-	@Test
-	public void testReadJsonWithTypeReference() throws Exception {
-		try (MechJettyServlet mech = new MechJettyServlet(
-				new CallbackServlet(
-						(req, res) -> {
-							res.getWriter().write("{\"name\":\"fuga\"}");
-						}))) {
-			MechResponse res = mech.get("/readJson").execute();
-			assertEquals(res.getStatusCode(), 200);
-			Form form = res.readJSON(new TypeReference<Form>() {
-			});
-			assertEquals(form.getName(), "fuga");
-		}
-	}
+    public static class ApiResponse<T> {
+        T data;
 
-	@Test
-	public void testSjis() throws Exception {
-		try (MechJettyServlet mech = new MechJettyServlet(
-				new CallbackServlet(
-						(req, res) -> {
-							String json = "田中";
-							byte[] jsonBytes = json.getBytes(Charset
-									.forName("Shift_JIS"));
-							res.setContentType("text/plain; charset=Shift_JIS");
-							res.getOutputStream().write(jsonBytes);
-						}))) {
-			MechResponse res = mech.get("/textsjis").execute();
-			assertEquals(res.getStatusCode(), 200);
-			assertEquals(res.getContentString(), "田中");
-		}
-	}
+        public T getData() {
+            return this.data;
+        }
 
-	@Test
-	public void testReadJsonUTF8() throws Exception {
-		try (MechJettyServlet mech = new MechJettyServlet(
-				new CallbackServlet(
-						(req, res) -> {
-							String json = "{\"name\":\"田中\"}";
-							byte[] jsonBytes = json.getBytes(Charset
-									.forName("UTF-8"));
-							res.getOutputStream().write(jsonBytes);
-						}))) {
-			MechResponse res = mech.get("/readJsonUTF8").execute();
-			assertEquals(res.getStatusCode(), 200);
-			Form form = res.readJSON(new TypeReference<Form>() {
-			});
-			assertEquals(form.getName(), "田中");
-		}
-	}
+        public void setData(T data) {
+            this.data = data;
+        }
+    }
 
-	@Test
-	public void testReadJsonUTF8Number2() throws Exception {
-		try (MechJettyServlet mech = new MechJettyServlet(
-				new CallbackServlet(
-						(req, res) -> {
-							String json = "{\"data\":\"田中\"}";
-							byte[] jsonBytes = json.getBytes(Charset
-									.forName("UTF-8"));
-							res.getOutputStream().write(jsonBytes);
-						}))) {
-			MechResponse res = mech.get("/readJsonUTF8").execute();
-			assertEquals(res.getStatusCode(), 200);
-			ApiResponse<String> dat = res
-					.readJSON(new TypeReference<ApiResponse<String>>() {
-					});
-			assertEquals(dat.getData(), "田中");
-		}
-	}
+    @Test
+    public void testQuery() throws Exception {
+        try (MechJettyServlet mech = new MechJettyServlet(
+                new CallbackServlet(
+                        (req, res) -> {
+                            res.getWriter().write(
+                                    "++x++" + req.getParameter("x"));
+                        }
+                )
+        )) {
+            try (MechResponse res = mech.get("/query?x=y").execute()) {
+                assertEquals(res.getStatusCode(), 200);
+                assertEquals(res.getContentString(), "++x++y");
+            }
+        }
+    }
 
-	public static class ApiResponse<T> {
-		T data;
+    @Test
+    public void testPostForm() throws UnsupportedEncodingException,
+            IOException, Exception {
+        try (MechJettyServlet mech = new MechJettyServlet(
+                new CallbackServlet(
+                        (req, res) -> {
+                            req.setCharacterEncoding("UTF-8");
+                            String name = req.getParameter("name");
+                            res.setCharacterEncoding("UTF-8");
+                            res.setContentType("text/plain); charset=utf-8");
+                            res.getWriter().write(name);
+                        }
+                )
+        )) {
+            try (MechResponse res = mech.post("/postForm").param("name", "pp太郎")
+                    .execute()) {
+                assertEquals(res.getStatusCode(), 200);
+                assertEquals(res.getContentString(), "pp太郎");
+            }
+        }
+    }
 
-		public T getData() {
-			return this.data;
-		}
+    @Test
+    public void testPostMultipart() throws UnsupportedEncodingException,
+            FileUploadException, IOException, Exception {
+        try (MechJettyServlet mech = new MechJettyServlet(
+                new CallbackServlet(
+                        (req, res) -> {
+                            req.setCharacterEncoding("UTF-8");
+                            res.setCharacterEncoding("UTF-8");
+                            FileItemFactory factory = new DiskFileItemFactory();
+                            ServletFileUpload servletFileUpload = new ServletFileUpload(
+                                    factory);
+                            Map<String, List<FileItem>> map = servletFileUpload
+                                    .parseParameterMap(req);
+                            String name = map.get("name").get(0).getString();
+                            List<FileItem> files = map.get("file");
+                            FileItem file = files.get(0);
+                            res.setContentType("text/plain; charset=utf-8");
+                            res.getWriter()
+                                    .write(name + "XXX" + file.getName());
+                        }
+                )
+        )) {
+            try (MechResponse res = mech.postMultipart("/postMultipart")
+                    .param("name", "pp太郎").file("file", new File("pom.xml"))
+                    .execute()) {
+                assertEquals(res.getStatusCode(), 200);
+                assertEquals(res.getContentString(), "pp太郎XXXpom.xml");
+            }
+        }
+    }
 
-		public void setData(T data) {
-			this.data = data;
-		}
-	}
+    @Test
+    public void testSetUserAgent() throws UnsupportedEncodingException,
+            FileUploadException, IOException, Exception {
+        try (MechJettyServlet mech = new MechJettyServlet(
+                new CallbackServlet(
+                        (req, res) -> {
+                            req.setCharacterEncoding("UTF-8");
+                            res.setCharacterEncoding("UTF-8");
+                            res.getWriter().write(req.getHeader("User-Agent"));
+                        }
+                )
+        )) {
+            mech.setUserAgent("My own browser");
+            try (MechResponse res = mech.postMultipart("/postMultipart")
+                    .param("name", "pp太郎").file("file", new File("pom.xml"))
+                    .execute()) {
+                assertEquals(res.getStatusCode(), 200);
+                assertEquals(res.getContentString(), "My own browser");
+            }
+        }
+    }
 
-	@Test
-	public void testQuery() throws Exception {
-		try (MechJettyServlet mech = new MechJettyServlet(
-				new CallbackServlet(
-						(req, res) -> {
-							res.getWriter().write(
-									"++x++" + req.getParameter("x"));
-						}))) {
-			MechResponse res = mech.get("/query?x=y").execute();
-			assertEquals(res.getStatusCode(), 200);
-			assertEquals(res.getContentString(), "++x++y");
-		}
-	}
+    @Test
+    public void testSetHeader() throws UnsupportedEncodingException,
+            FileUploadException, IOException, Exception {
+        try (MechJettyServlet mech = new MechJettyServlet(
+                new CallbackServlet(
+                        (req, res) -> {
+                            req.setCharacterEncoding("UTF-8");
+                            res.setCharacterEncoding("UTF-8");
+                            res.getWriter().write(req.getHeader("X-Foo"));
+                        }
+                )
+        )) {
+            mech.setHeader("X-Foo", "Bar");
+            try (MechResponse res = mech.postMultipart("/postMultipart")
+                    .param("name", "pp太郎").file("file", new File("pom.xml"))
+                    .execute()) {
+                assertEquals(res.getStatusCode(), 200);
+                assertEquals(res.getContentString(), "Bar");
+            }
+        }
+    }
 
-	@Test
-	public void testPostForm() throws UnsupportedEncodingException,
-			IOException, Exception {
-		try (MechJettyServlet mech = new MechJettyServlet(
-				new CallbackServlet(
-						(req, res) -> {
-							req.setCharacterEncoding("UTF-8");
-							String name = req.getParameter("name");
-							res.setCharacterEncoding("UTF-8");
-							res.setContentType("text/plain); charset=utf-8");
-							res.getWriter().write(name);
-						}))) {
-			MechResponse res = mech.post("/postForm").param("name", "pp太郎")
-					.execute();
-			assertEquals(res.getStatusCode(), 200);
-			assertEquals(res.getContentString(), "pp太郎");
-		}
-	}
+    @Test
+    public void testDisableRedirectHandling()
+            throws UnsupportedEncodingException,
+            FileUploadException, IOException, Exception {
+        try (MechJettyServlet mech = new MechJettyServlet(
+                new CallbackServlet(
+                        (req, res) -> {
+                            req.setCharacterEncoding("UTF-8");
+                            res.setCharacterEncoding("UTF-8");
+                            if (req.getPathInfo().equals("/")) {
+                                res.sendRedirect("/x");
+                            } else {
+                                res.getWriter().write("HAHA");
+                            }
+                        }
+                )
+        )) {
+            mech.setHeader("X-Foo", "Bar");
+            mech.disableRedirectHandling();
+            try (MechResponse res = mech.get("/").execute()) {
+                assertEquals(res.getStatusCode(), 302);
+            }
+        }
+    }
 
-	@Test
-	public void testPostMultipart() throws UnsupportedEncodingException,
-			FileUploadException, IOException, Exception {
-		try (MechJettyServlet mech = new MechJettyServlet(
-				new CallbackServlet(
-						(req, res) -> {
-							req.setCharacterEncoding("UTF-8");
-							res.setCharacterEncoding("UTF-8");
-							FileItemFactory factory = new DiskFileItemFactory();
-							ServletFileUpload servletFileUpload = new ServletFileUpload(
-									factory);
-							Map<String, List<FileItem>> map = servletFileUpload
-									.parseParameterMap(req);
-							String name = map.get("name").get(0).getString();
-							List<FileItem> files = map.get("file");
-							FileItem file = files.get(0);
-							res.setContentType("text/plain; charset=utf-8");
-							res.getWriter()
-									.write(name + "XXX" + file.getName());
-						}))) {
-			MechResponse res = mech.postMultipart("/postMultipart")
-					.param("name", "pp太郎").file("file", new File("pom.xml"))
-					.execute();
-			assertEquals(res.getStatusCode(), 200);
-			assertEquals(res.getContentString(), "pp太郎XXXpom.xml");
-		}
-	}
+    @Test
+    public void testRequestListener()
+            throws UnsupportedEncodingException,
+            FileUploadException, IOException, Exception {
+        try (MechJettyServlet mech = new MechJettyServlet(
+                new CallbackServlet(
+                        (req, res) -> {
+                            req.setCharacterEncoding("UTF-8");
+                            res.setCharacterEncoding("UTF-8");
+                            res.getWriter().write("HAHA");
+                        }
+                )
+        )) {
+            mech.addRequestListener((req, res) -> {
+                try {
+                    final PrintStream out = System.out;
+                    out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> REQUEST");
+                    out.println(req.getRequestLine().toString());
+                    for (Header header : req.getAllHeaders()) {
+                        out.println(header);
+                    }
+                    if (req instanceof HttpEntityEnclosingRequest) {
+                        out.println("");
+                        byte[] bytes = EntityUtils
+                                .toByteArray(((HttpEntityEnclosingRequest) req)
+                                        .getEntity());
+                        out.write(bytes);
+                    }
 
-	@Test
-	public void testSetUserAgent() throws UnsupportedEncodingException,
-			FileUploadException, IOException, Exception {
-		try (MechJettyServlet mech = new MechJettyServlet(
-				new CallbackServlet(
-						(req, res) -> {
-							req.setCharacterEncoding("UTF-8");
-							res.setCharacterEncoding("UTF-8");
-							res.getWriter().write(req.getHeader("User-Agent"));
-						}))) {
-			mech.setUserAgent("My own browser");
-			MechResponse res = mech.postMultipart("/postMultipart")
-					.param("name", "pp太郎").file("file", new File("pom.xml"))
-					.execute();
-			assertEquals(res.getStatusCode(), 200);
-			assertEquals(res.getContentString(), "My own browser");
-		}
-	}
-
-	@Test
-	public void testSetHeader() throws UnsupportedEncodingException,
-			FileUploadException, IOException, Exception {
-		try (MechJettyServlet mech = new MechJettyServlet(
-				new CallbackServlet(
-						(req, res) -> {
-							req.setCharacterEncoding("UTF-8");
-							res.setCharacterEncoding("UTF-8");
-							res.getWriter().write(req.getHeader("X-Foo"));
-						}))) {
-			mech.setHeader("X-Foo", "Bar");
-			MechResponse res = mech.postMultipart("/postMultipart")
-					.param("name", "pp太郎").file("file", new File("pom.xml"))
-					.execute();
-			assertEquals(res.getStatusCode(), 200);
-			assertEquals(res.getContentString(), "Bar");
-		}
-	}
-
-	@Test
-	public void testDisableRedirectHandling()
-			throws UnsupportedEncodingException,
-			FileUploadException, IOException, Exception {
-		try (MechJettyServlet mech = new MechJettyServlet(
-				new CallbackServlet(
-						(req, res) -> {
-							req.setCharacterEncoding("UTF-8");
-							res.setCharacterEncoding("UTF-8");
-							if (req.getPathInfo().equals("/")) {
-								res.sendRedirect("/x");
-							} else {
-								res.getWriter().write("HAHA");
-							}
-						}))) {
-			mech.setHeader("X-Foo", "Bar");
-			mech.disableRedirectHandling();
-			MechResponse res = mech.get("/").execute();
-			assertEquals(res.getStatusCode(), 302);
-		}
-	}
-
-	@Test
-	public void testRequestListener()
-			throws UnsupportedEncodingException,
-			FileUploadException, IOException, Exception {
-		try (MechJettyServlet mech = new MechJettyServlet(
-				new CallbackServlet(
-						(req, res) -> {
-							req.setCharacterEncoding("UTF-8");
-							res.setCharacterEncoding("UTF-8");
-							res.getWriter().write("HAHA");
-						}))) {
-			mech.addRequestListener((req, res) -> {
-				try {
-					final PrintStream out = System.out;
-					out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> REQUEST");
-					out.println(req.getRequestLine().toString());
-					for (Header header : req.getAllHeaders()) {
-						out.println(header);
-					}
-					if (req instanceof HttpEntityEnclosingRequest) {
-						out.println("");
-						byte[] bytes = EntityUtils
-								.toByteArray(((HttpEntityEnclosingRequest) req)
-										.getEntity());
-						out.write(bytes);
-					}
-
-					out.println("");
-					out.println("");
-					out.println("RESPONSE <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-					out.println(res.getStatusLine());
-					for (Header header : res.getAllHeaders()) {
-						out.println(header);
-					}
-					out.println("");
-					HttpEntity entity = res.getEntity();
-					byte[] bytes = EntityUtils
-							.toByteArray(entity);
-					out.write(bytes);
-					out.println("");
-				} catch (Exception e) {
-					throw new RuntimeException(e);
-				}
-			});
-			mech.setHeader("X-Foo", "Bar");
-			MechResponse res = mech.post("/x",
-					new StringEntity("hogehoge=fugafuga", "UTF-8")).execute();
-			assertEquals(res.getStatusCode(), 200);
-			assertEquals(res.getContentString(), "HAHA");
-		}
-	}
-
-	@Test
-	public void testPrintRequestListener()
-			throws UnsupportedEncodingException,
-			FileUploadException, IOException, Exception {
-		try (MechJettyServlet mech = new MechJettyServlet(
-				new CallbackServlet(
-						(req, res) -> {
-							req.setCharacterEncoding("UTF-8");
-							res.setCharacterEncoding("UTF-8");
-							res.getWriter().write("HAHA");
-						}))) {
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			PrintStream ps = new PrintStream(baos);
-			mech.addRequestListener(new PrintRequestListener(ps));
-			mech.setHeader("X-Foo", "Bar");
-			MechResponse res = mech.post("/x",
-					new StringEntity("hogehoge=fugafuga", "UTF-8")).execute();
-			assertEquals(res.getStatusCode(), 200);
-			assertEquals(res.getContentString(), "HAHA");
-			String output = baos.toString("UTF8");
-			assertTrue(output.contains("HAHA"));
-			assertTrue(output.contains("hogehoge=fugafuga"));
-		}
-	}
-
-	@Test
-	public void testPrintRequestListenerPrettyPrint()
-			throws UnsupportedEncodingException,
-			FileUploadException, IOException, Exception {
-		try (MechJettyServlet mech = new MechJettyServlet(
-				new CallbackServlet(
-						(req, res) -> {
-							req.setCharacterEncoding("UTF-8");
-							res.setCharacterEncoding("UTF-8");
-							res.setContentType("application/json");
-							res.getWriter().write("{\"hoge\":[5,9]}");
-						}))) {
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			PrintStream ps = new PrintStream(baos);
-			mech.addRequestListener(new PrintRequestListener(ps).enableJsonPrettyPrintFilter());
-			mech.setHeader("X-Foo", "Bar");
-			MechResponse res = mech.post("/x",
-					new StringEntity("hogehoge=fugafuga", "UTF-8")).execute();
-			assertEquals(res.getStatusCode(), 200);
-			assertEquals(res.getContentString(), "{\"hoge\":[5,9]}");
-			String output = baos.toString("UTF8");
-			assertTrue(output.contains("X-Foo"));
-			assertTrue(output.contains("hogehoge=fugafuga"));
-			assertTrue(output.contains("[ 5, 9 ]"));
-			System.out.println(output);
-		}
-	}
+                    out.println("");
+                    out.println("");
+                    out.println("RESPONSE <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                    out.println(res.getStatusLine());
+                    for (Header header : res.getAllHeaders()) {
+                        out.println(header);
+                    }
+                    out.println("");
+                    HttpEntity entity = res.getEntity();
+                    byte[] bytes = EntityUtils
+                            .toByteArray(entity);
+                    out.write(bytes);
+                    out.println("");
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+            mech.setHeader("X-Foo", "Bar");
+            try (MechResponse res = mech.post("/x",
+                    new StringEntity("hogehoge=fugafuga", "UTF-8")).execute()) {
+                assertEquals(res.getStatusCode(), 200);
+                assertEquals(res.getContentString(), "HAHA");
+            }
+        }
+    }
 }
