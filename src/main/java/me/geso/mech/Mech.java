@@ -25,7 +25,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
-public class Mech {
+public class Mech implements AutoCloseable {
 	private String baseURL;
 	private final HeaderGroup defaultHeaders = new HeaderGroup();
 	private final HttpClientBuilder httpClientBuilder;
@@ -216,4 +216,9 @@ public class Mech {
 			}
 		}
 	}
+
+    @Override
+    public void close() throws Exception {
+        // do nothing.
+    }
 }

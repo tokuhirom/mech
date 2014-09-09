@@ -6,58 +6,45 @@ Testing library for web applications. You can test web application based on serv
 
 ## SYNOPSIS
 
-	@Test
-	public void testHttp() {
-		TestMech mech = new TestMech("http://google.com/");
-		TestMechResponse res = mech.get("/").execute();
-		res.assertSuccess();
-		res.assertContentContains("heheh");
-	}
+Access to the external service.
 
-	@Test
-	public void testRoot() {
-		TestMechServlet mech = new TestMechServlet(Servlet.class);
-		TestMechResponse res = mech.get("/").execute();
-		res.assertSuccess();
-		res.assertContentContains("heheh");
-	}
+    @Test
+    public void testGoogle() throws Exception {
+        try (Mech mech = new Mech("http://google.com/")) {
+            try (MechResponse res = mech.get("/").execute()) {
+                assertEquals(200, res.getStatusCode());
+            }
+        }
+    }
 
-	@Test
-	public void testHoge() {
-		TestMechServlet mech = new TestMechServlet(Servlet.class);
-		TestMechResponse res = mech.get("/hogehoge").execute();
-		res.assertSuccess();
-		res.assertStatusEquals(200);
-		res.assertContentTypeMimeTypeEquals("text/plain");
-	}
+Testing with MechJettyServlet.
 
-	@Test
-	public void testJson() {
-		Form form = new Form("hoge");
-		TestMechServlet mech = new TestMechServlet(Servlet.class);
-		TestMechResponse res = mech.postJSON("/json", form).execute();
-		res.assertSuccess();
-		res.assertContentEquals("+++{\"name\":\"hoge\"}+++");
-	}
+    class MyServlet extends HttpServlet {
+        protected void service(HttpServletRequest req, HttpServletResponse resp)
+                throws ServletException, IOException {
+            resp.getWriter().write("Hello");
+        }
 
-	@Test
-	public void testPostForm() {
-		TestMechJettyServlet mech = new TestMechJettyServlet(Servlet.class);
-		TestMechResponse res = mech.post("/postForm").param("name", "pp太郎")
-				.execute();
-		res.assertSuccess();
-		res.assertContentEquals("pp太郎");
-	}
+    }
 
-	@Test
-	public void testPostMultipart() {
-		TestMechJettyServlet mech = new TestMechJettyServlet(Servlet.class);
-		TestMechResponse res = mech.postMultipart("/postMultipart")
-				.param("name", "pp太郎").file("file", new File("pom.xml"))
-				.execute();
-		res.assertSuccess();
-		res.assertContentEquals("pp太郎XXXpom.xml");
-	}
+    public class ServletTest {
+        @Test
+        public void test() throws Exception {
+            try (MechJettyServlet mech = new MechJettyServlet(new MyServlet())) {
+                try (MechResponse res = mech.get("/").execute()) {
+                    assertEquals(200, res.getStatusCode());
+                    assertEquals("Hello", res.getContentString());
+                }
+            }
+        }
+    }
+
+## Features
+
+ * Really easy Servlet testing
+ * POST with application/json
+ * POST with multipart/form-data
+ * fluent interface.
 
 ## Install with maven
 
