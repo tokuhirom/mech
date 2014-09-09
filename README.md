@@ -1,6 +1,6 @@
 # testmech
 
-[![Build Status](https://travis-ci.org/tokuhirom/testmech.svg?branch=master)](https://travis-ci.org/tokuhirom/testmech)
+[![Build Status](https://travis-ci.org/tokuhirom/mech.svg?branch=master)](https://travis-ci.org/tokuhirom/mech)
 
 Testing library for web applications. You can test web application based on servlet API very easy.
 
