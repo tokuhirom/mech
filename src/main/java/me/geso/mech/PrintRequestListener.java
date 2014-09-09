@@ -68,15 +68,12 @@ public class PrintRequestListener implements MechRequestListener {
 					.toByteArray(entity);
 			if (this.jsonPrettyPrintFilterEnabled) {
 				Header contentType = res.getFirstHeader("Content-Type");
-				System.out.println(contentType.toString());
-				System.out.println(contentType.getValue());
 				if (contentType != null
 						&& contentType.getValue().startsWith("application/json")) {
 					ObjectMapper mapper = new ObjectMapper();
 					mapper.enable(SerializationFeature.INDENT_OUTPUT);
 					JsonNode tree = mapper.readTree(bytes);
 					bytes = mapper.writeValueAsBytes(tree);
-					System.out.println(mapper.writeValueAsString(tree));
 				}
 			}
 			out.write(bytes);
