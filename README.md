@@ -1,4 +1,4 @@
-# testmech
+# mech
 
 [![Build Status](https://travis-ci.org/tokuhirom/mech.svg?branch=master)](https://travis-ci.org/tokuhirom/mech)
 
