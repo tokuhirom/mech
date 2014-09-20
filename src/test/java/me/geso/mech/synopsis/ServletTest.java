@@ -13,7 +13,9 @@ import java.io.IOException;
 import static org.junit.Assert.assertEquals;
 
 class MyServlet extends HttpServlet {
-    protected void service(HttpServletRequest req, HttpServletResponse resp)
+	private static final long serialVersionUID = 1L;
+
+	protected void service(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         resp.getWriter().write("Hello");
     }

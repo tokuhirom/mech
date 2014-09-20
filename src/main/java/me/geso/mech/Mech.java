@@ -3,7 +3,9 @@ package me.geso.mech;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
+import lombok.NonNull;
 import org.apache.http.Header;
 import org.apache.http.HeaderIterator;
 import org.apache.http.HttpEntity;
@@ -31,6 +33,7 @@ public class Mech implements AutoCloseable {
 	private final HttpClientBuilder httpClientBuilder;
 	private CookieStore cookieStore = new BasicCookieStore();
 	private List<MechRequestListener> requestListeners;
+	private Optional<JsonValidator> jsonValidator = Optional.empty();
 
 	public Mech() {
 		this.httpClientBuilder = HttpClientBuilder.create();
@@ -217,8 +220,20 @@ public class Mech implements AutoCloseable {
 		}
 	}
 
-    @Override
-    public void close() throws Exception {
-        // do nothing.
-    }
+	@Override
+	public void close() throws Exception {
+		// do nothing.
+	}
+
+	public Optional<JsonValidator> getJsonValidator() {
+		return jsonValidator;
+	}
+
+	public void setJsonValidator(@NonNull JsonValidator jsonValidator) {
+		this.jsonValidator = Optional.of(jsonValidator);
+	}
+
+	public void setJsonValidator(@NonNull Optional<JsonValidator> jsonValidator) {
+		this.jsonValidator = jsonValidator;
+	}
 }

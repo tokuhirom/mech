@@ -62,7 +62,7 @@ public class MechRequest {
 				response.setEntity(new BufferedHttpEntity(entity));
 			}
 			this.mech.callRequestListener(request, response);
-			return new MechResponse(this, httpclient, response);
+			return new MechResponse(this, httpclient, response, this.mech.getJsonValidator());
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
