@@ -23,11 +23,14 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 public class MechTest {
@@ -376,6 +379,31 @@ public class MechTest {
 					.execute()) {
 				assertEquals(res.getStatusCode(), 200);
 				assertEquals(res.getContentString(), "Bar");
+			}
+		}
+	}
+
+	@Test
+	public void testGetHeader() throws UnsupportedEncodingException,
+			FileUploadException, IOException, Exception {
+		try (MechJettyServlet mech = new MechJettyServlet(
+				new CallbackServlet(
+						(req, res) -> {
+							req.setCharacterEncoding("UTF-8");
+							res.setCharacterEncoding("UTF-8");
+							res.addHeader("X-Bar", "a");
+							res.addHeader("X-Bar", "b");
+							res.addHeader("X-Bar", "c");
+							res.getWriter().write("HAH");
+						}
+				)
+				)) {
+			try (MechResponse res = mech.get("/").execute()) {
+				assertEquals(res.getStatusCode(), 200);
+				assertThat(res.getFirstHeader("X-Foo").isPresent(), is(false));
+				assertThat(res.getFirstHeader("X-Bar").isPresent(), is(true));
+				assertThat(res.getFirstHeader("X-Bar").get(), is("a"));
+				assertThat(res.getHeaders("X-Bar"), is(Arrays.asList("a", "b", "c")));
 			}
 		}
 	}

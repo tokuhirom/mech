@@ -53,8 +53,8 @@ public class MechResponse implements Closeable {
 		}
 	}
 
-	public List<String> getAllHeaders(String name) {
-		return Arrays.stream(this.getResponse().getAllHeaders())
+	public List<String> getHeaders(String name) {
+		return Arrays.stream(this.getResponse().getHeaders(name))
 				.map(header -> header.getValue())
 				.collect(Collectors.toList());
 	}
