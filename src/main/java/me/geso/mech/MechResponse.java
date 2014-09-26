@@ -4,10 +4,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import lombok.NonNull;
 
+import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.entity.ContentType;
@@ -40,8 +44,19 @@ public class MechResponse implements Closeable {
 		return getResponse().getStatusLine().getStatusCode();
 	}
 
-	public String getFirstHeader(String name) {
-		return getResponse().getFirstHeader(name).getValue();
+	public Optional<String> getFirstHeader(String name) {
+		final Header firstHeader = getResponse().getFirstHeader(name);
+		if (firstHeader != null) {
+			return Optional.of(firstHeader.getValue());
+		} else {
+			return Optional.empty();
+		}
+	}
+
+	public List<String> getAllHeaders(String name) {
+		return Arrays.stream(this.getResponse().getAllHeaders())
+				.map(header -> header.getValue())
+				.collect(Collectors.toList());
 	}
 
 	public ContentType getContentType() {
