@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 
 /**
  * Print request/response to the log. This is useful when you are debugging.
+ * {@code mech.addRequestListener(new PrintRequestListener(System.out));}
  * 
  * @author tokuhirom
  *
@@ -69,7 +70,8 @@ public class PrintRequestListener implements MechRequestListener {
 			if (this.jsonPrettyPrintFilterEnabled) {
 				Header contentType = res.getFirstHeader("Content-Type");
 				if (contentType != null
-						&& contentType.getValue().startsWith("application/json")) {
+						&& contentType.getValue()
+								.startsWith("application/json")) {
 					ObjectMapper mapper = new ObjectMapper();
 					mapper.enable(SerializationFeature.INDENT_OUTPUT);
 					JsonNode tree = mapper.readTree(bytes);
