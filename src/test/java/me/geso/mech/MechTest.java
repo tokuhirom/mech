@@ -1,6 +1,22 @@
 package me.geso.mech;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import javax.servlet.ServletInputStream;
+import javax.servlet.http.Cookie;
 
 import me.geso.tinyvalidator.constraints.NotNull;
 
@@ -16,22 +32,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
 
-import javax.servlet.ServletInputStream;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import com.fasterxml.jackson.core.type.TypeReference;
 
 public class MechTest {
 
@@ -114,7 +115,7 @@ public class MechTest {
 						}
 				)
 				)) {
-			Form form = new Form("hoge");
+			final Form form = new Form("hoge");
 			try (MechResponse res = mech.postJSON("/json", form).execute()) {
 				assertEquals(res.getStatusCode(), 200);
 				assertEquals(res.getContentString(), "+++{\n"
@@ -142,7 +143,7 @@ public class MechTest {
 						}
 				)
 				)) {
-			Form form = new Form("hoge");
+			final Form form = new Form("hoge");
 			try (MechResponse res = mech.postJSON("/json?foo=bar", form)
 					.execute()) {
 				// assertEquals(res.getStatusCode(), 200);
@@ -163,7 +164,7 @@ public class MechTest {
 				)) {
 			try (MechResponse res = mech.get("/readJson").execute()) {
 				assertEquals(res.getStatusCode(), 200);
-				Form form = res.readJSON(new TypeReference<Form>() {
+				final Form form = res.readJSON(new TypeReference<Form>() {
 				});
 				assertEquals(form.getName(), "fuga");
 			}
@@ -183,10 +184,10 @@ public class MechTest {
 			mech.setJsonValidator(Optional.of(new TinyValidatorJsonValidator()));
 			try (MechResponse res = mech.get("/readJson").execute()) {
 				assertEquals(res.getStatusCode(), 200);
-				Form form = res.readJSON(new TypeReference<Form>() {
+				final Form form = res.readJSON(new TypeReference<Form>() {
 				});
 				assertEquals(form.getName(), "fuga");
-			} catch (JsonValidatorViolationException e) {
+			} catch (final JsonValidatorViolationException e) {
 				gotViolationException = true;
 			}
 		}
@@ -227,7 +228,7 @@ public class MechTest {
 				)) {
 			try (MechResponse res = mech.get("/readJsonUTF8").execute()) {
 				assertEquals(res.getStatusCode(), 200);
-				Form form = res.readJSON(new TypeReference<Form>() {
+				final Form form = res.readJSON(new TypeReference<Form>() {
 				});
 				assertEquals(form.getName(), "田中");
 			}
@@ -248,7 +249,7 @@ public class MechTest {
 				)) {
 			try (MechResponse res = mech.get("/readJsonUTF8").execute()) {
 				assertEquals(res.getStatusCode(), 200);
-				ApiResponse<String> dat = res
+				final ApiResponse<String> dat = res
 						.readJSON(new TypeReference<ApiResponse<String>>() {
 						});
 				assertEquals(dat.getData(), "田中");
@@ -403,7 +404,8 @@ public class MechTest {
 				assertThat(res.getFirstHeader("X-Foo").isPresent(), is(false));
 				assertThat(res.getFirstHeader("X-Bar").isPresent(), is(true));
 				assertThat(res.getFirstHeader("X-Bar").get(), is("a"));
-				assertThat(res.getHeaders("X-Bar"), is(Arrays.asList("a", "b", "c")));
+				assertThat(res.getHeaders("X-Bar"),
+						is(Arrays.asList("a", "b", "c")));
 			}
 		}
 	}
@@ -451,12 +453,12 @@ public class MechTest {
 					final PrintStream out = System.out;
 					out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> REQUEST");
 					out.println(req.getRequestLine().toString());
-					for (Header header : req.getAllHeaders()) {
+					for (final Header header : req.getAllHeaders()) {
 						out.println(header);
 					}
 					if (req instanceof HttpEntityEnclosingRequest) {
 						out.println("");
-						byte[] bytes = EntityUtils
+						final byte[] bytes = EntityUtils
 								.toByteArray(((HttpEntityEnclosingRequest) req)
 										.getEntity());
 						out.write(bytes);
@@ -466,16 +468,16 @@ public class MechTest {
 					out.println("");
 					out.println("RESPONSE <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
 					out.println(res.getStatusLine());
-					for (Header header : res.getAllHeaders()) {
+					for (final Header header : res.getAllHeaders()) {
 						out.println(header);
 					}
 					out.println("");
-					HttpEntity entity = res.getEntity();
-					byte[] bytes = EntityUtils
+					final HttpEntity entity = res.getEntity();
+					final byte[] bytes = EntityUtils
 							.toByteArray(entity);
 					out.write(bytes);
 					out.println("");
-				} catch (Exception e) {
+				} catch (final Exception e) {
 					throw new RuntimeException(e);
 				}
 			});
@@ -484,6 +486,64 @@ public class MechTest {
 					new StringEntity("hogehoge=fugafuga", "UTF-8")).execute()) {
 				assertEquals(res.getStatusCode(), 200);
 				assertEquals(res.getContentString(), "HAHA");
+			}
+		}
+	}
+
+	@Test
+	public void testCookie() throws Exception {
+		try (MechJettyServlet mech = new MechJettyServlet(
+				new CallbackServlet(
+						(req, res) -> {
+							if (req.getPathInfo().equals("/")) {
+								res.setContentType("text/plain; charset=UTF-8");
+								res.addCookie(new Cookie("a", "b"));
+								res.getWriter().write("heheh");
+							} else {
+								res.setContentType("text/plain; charset=UTF-8");
+								Cookie[] cookies = req.getCookies();
+								if (cookies == null) {
+									res.getWriter().write("NUULLL");
+								} else {
+
+									for (Cookie cookie : cookies) {
+										res.getWriter()
+												.write(cookie.getName() + "="
+														+ cookie.getValue());
+									}
+								}
+							}
+						}
+				)
+				)) {
+			mech.addRequestListener(new PrintRequestListener());
+
+			try (MechResponse res = mech.get("/").execute()) {
+				assertEquals(res.getStatusCode(), 200);
+				assertEquals(res.getContentType().getMimeType(), "text/plain");
+				assertEquals(res.getContentType().getCharset().displayName(),
+						"UTF-8");
+				assertTrue(res.getContentString().contains("heheh"));
+			}
+			try (MechResponse res = mech.get("/2").execute()) {
+				assertEquals(res.getStatusCode(), 200);
+				assertEquals(res.getContentType().getMimeType(), "text/plain");
+				assertEquals(res.getContentType().getCharset().displayName(),
+						"UTF-8");
+				assertTrue(res.getContentString().contains("a=b"));
+			}
+		}
+	}
+
+	@Test
+	public void testCookie2() throws Exception {
+		try (Mech mech = new Mech()) {
+			mech.addRequestListener(new PrintRequestListener());
+			try (MechResponse res = mech.get("https://github.com/").execute()) {
+				assertEquals(res.getStatusCode(), 200);
+			}
+			try (MechResponse res = mech.get("https://github.com/").execute()) {
+				assertEquals(res.getStatusCode(), 200);
 			}
 		}
 	}

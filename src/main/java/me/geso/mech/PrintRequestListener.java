@@ -17,11 +17,15 @@ import com.fasterxml.jackson.databind.SerializationFeature;
  * Print request/response to the log. This is useful when you are debugging.
  * {@code mech.addRequestListener(new PrintRequestListener(System.out));}
  * 
+ * <br>
+ * <br>
+ * This handler can't show the headers added by HttpClient.
+ * 
  * @author tokuhirom
  *
  */
 public class PrintRequestListener implements MechRequestListener {
-	private PrintStream out;
+	private final PrintStream out;
 	private boolean jsonPrettyPrintFilterEnabled;
 
 	/**
@@ -45,12 +49,12 @@ public class PrintRequestListener implements MechRequestListener {
 		try {
 			out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> REQUEST");
 			out.println(req.getRequestLine().toString());
-			for (Header header : req.getAllHeaders()) {
+			for (final Header header : req.getAllHeaders()) {
 				out.println(header);
 			}
 			if (req instanceof HttpEntityEnclosingRequest) {
 				out.println("");
-				byte[] bytes = EntityUtils
+				final byte[] bytes = EntityUtils
 						.toByteArray(((HttpEntityEnclosingRequest) req)
 								.getEntity());
 				out.write(bytes);
@@ -60,27 +64,27 @@ public class PrintRequestListener implements MechRequestListener {
 			out.println("");
 			out.println("RESPONSE <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
 			out.println(res.getStatusLine());
-			for (Header header : res.getAllHeaders()) {
+			for (final Header header : res.getAllHeaders()) {
 				out.println(header);
 			}
 			out.println("");
-			HttpEntity entity = res.getEntity();
+			final HttpEntity entity = res.getEntity();
 			byte[] bytes = EntityUtils
 					.toByteArray(entity);
 			if (this.jsonPrettyPrintFilterEnabled) {
-				Header contentType = res.getFirstHeader("Content-Type");
+				final Header contentType = res.getFirstHeader("Content-Type");
 				if (contentType != null
 						&& contentType.getValue()
 								.startsWith("application/json")) {
-					ObjectMapper mapper = new ObjectMapper();
+					final ObjectMapper mapper = new ObjectMapper();
 					mapper.enable(SerializationFeature.INDENT_OUTPUT);
-					JsonNode tree = mapper.readTree(bytes);
+					final JsonNode tree = mapper.readTree(bytes);
 					bytes = mapper.writeValueAsBytes(tree);
 				}
 			}
 			out.write(bytes);
 			out.println("");
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
 	}

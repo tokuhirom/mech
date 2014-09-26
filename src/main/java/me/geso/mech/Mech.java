@@ -6,12 +6,14 @@ import java.util.List;
 import java.util.Optional;
 
 import lombok.NonNull;
+
 import org.apache.http.Header;
 import org.apache.http.HeaderIterator;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.CookieStore;
+import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -31,12 +33,16 @@ public class Mech implements AutoCloseable {
 	private String baseURL;
 	private final HeaderGroup defaultHeaders = new HeaderGroup();
 	private final HttpClientBuilder httpClientBuilder;
-	private CookieStore cookieStore = new BasicCookieStore();
+	private final CookieStore cookieStore = new BasicCookieStore();
 	private List<MechRequestListener> requestListeners;
 	private Optional<JsonValidator> jsonValidator = Optional.empty();
 
 	public Mech() {
 		this.httpClientBuilder = HttpClientBuilder.create();
+		final RequestConfig globalConfig = RequestConfig.custom()
+				.setCookieSpec(CookieSpecs.BEST_MATCH)
+				.build();
+		this.httpClientBuilder.setDefaultRequestConfig(globalConfig);
 		this.httpClientBuilder.setDefaultCookieStore(cookieStore);
 	}
 
@@ -44,6 +50,10 @@ public class Mech implements AutoCloseable {
 		this.baseURL = baseURL;
 		this.httpClientBuilder = HttpClientBuilder.create();
 		this.httpClientBuilder.setDefaultCookieStore(cookieStore);
+		final RequestConfig globalConfig = RequestConfig.custom()
+				.setCookieSpec(CookieSpecs.BEST_MATCH)
+				.build();
+		this.httpClientBuilder.setDefaultRequestConfig(globalConfig);
 	}
 
 	public HttpClientBuilder getHttpClientBuilder() {
@@ -63,6 +73,10 @@ public class Mech implements AutoCloseable {
 		this.baseURL = baseURL;
 	}
 
+	public String getBaseURL() {
+		return this.baseURL;
+	}
+
 	/**
 	 * <code>
 	 * BasicClientCookie cookie = new BasicClientCookie("key", "value");
@@ -79,32 +93,37 @@ public class Mech implements AutoCloseable {
 
 	private URI makeURI(String pathQuery) {
 		try {
-			baseURL = baseURL.replaceFirst("/$", "");
-			if (pathQuery.startsWith("/")) {
-				pathQuery = "/" + pathQuery;
+			if (this.baseURL != null) {
+				baseURL = baseURL.replaceFirst("/$", "");
+				if (pathQuery.startsWith("/")) {
+					pathQuery = "/" + pathQuery;
+				}
+				final URI url = new URI(baseURL + pathQuery);
+				return url;
+			} else {
+				final URI url = new URI(pathQuery);
+				return url;
 			}
-			URI url = new URI(baseURL + pathQuery);
-			return url;
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	public MechRequest get(String pathQuery) {
+	public MechRequest get(@NonNull String pathQuery) {
 		try {
-			URI url = makeURI(pathQuery);
-			HttpGet get = new HttpGet(url);
+			final URI url = makeURI(pathQuery);
+			final HttpGet get = new HttpGet(url);
 			this.setDefaultHeaders(get);
 			return new MechRequest(this, get);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	private void setDefaultHeaders(HttpRequestBase req) {
-		HeaderIterator iterator = this.defaultHeaders.iterator();
+		final HeaderIterator iterator = this.defaultHeaders.iterator();
 		while (iterator.hasNext()) {
-			Header header = iterator.nextHeader();
+			final Header header = iterator.nextHeader();
 			req.addHeader(header);
 		}
 	}
@@ -125,23 +144,23 @@ public class Mech implements AutoCloseable {
 		}
 
 		try {
-			ObjectMapper mapper = this.createObjectMapper();
+			final ObjectMapper mapper = this.createObjectMapper();
 
-			byte[] json = mapper.writeValueAsBytes(params);
-			URI url = makeURI(path);
-			HttpPost post = new HttpPost(url);
+			final byte[] json = mapper.writeValueAsBytes(params);
+			final URI url = makeURI(path);
+			final HttpPost post = new HttpPost(url);
 			this.setDefaultHeaders(post);
 			post.setHeader("Content-Type",
 					"application/json; charset=utf-8");
 			post.setEntity(new ByteArrayEntity(json));
 			return new MechRequest(this, post);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	public ObjectMapper createObjectMapper() {
-		ObjectMapper mapper = new ObjectMapper();
+		final ObjectMapper mapper = new ObjectMapper();
 		mapper.configure(JsonGenerator.Feature.ESCAPE_NON_ASCII, true);
 		mapper.enable(SerializationFeature.INDENT_OUTPUT);
 		return mapper;
@@ -153,40 +172,40 @@ public class Mech implements AutoCloseable {
 		}
 
 		try {
-			ObjectMapper mapper = new ObjectMapper();
+			final ObjectMapper mapper = new ObjectMapper();
 			mapper.configure(JsonGenerator.Feature.ESCAPE_NON_ASCII, true);
-			URI url = makeURI(path);
-			HttpPost post = new HttpPost(url);
+			final URI url = makeURI(path);
+			final HttpPost post = new HttpPost(url);
 			this.setDefaultHeaders(post);
 			post.setEntity(entity);
 			return new MechRequest(this, post);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	public <T> MechPostUrlEncodedFormRequest post(String path) {
 		try {
-			ObjectMapper mapper = new ObjectMapper();
+			final ObjectMapper mapper = new ObjectMapper();
 			mapper.configure(JsonGenerator.Feature.ESCAPE_NON_ASCII, true);
-			URI url = makeURI(path);
-			HttpPost post = new HttpPost(url);
+			final URI url = makeURI(path);
+			final HttpPost post = new HttpPost(url);
 			this.setDefaultHeaders(post);
 			return new MechPostUrlEncodedFormRequest(this, post);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	public <T> MechPostMultipartFormRequest postMultipart(String path) {
 		try {
-			ObjectMapper mapper = new ObjectMapper();
+			final ObjectMapper mapper = new ObjectMapper();
 			mapper.configure(JsonGenerator.Feature.ESCAPE_NON_ASCII, true);
-			URI url = makeURI(path);
-			HttpPost post = new HttpPost(url);
+			final URI url = makeURI(path);
+			final HttpPost post = new HttpPost(url);
 			this.setDefaultHeaders(post);
 			return new MechPostMultipartFormRequest(this, post);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -214,7 +233,7 @@ public class Mech implements AutoCloseable {
 	void callRequestListener(HttpRequestBase request,
 			HttpResponse response) {
 		if (this.requestListeners != null) {
-			for (MechRequestListener listener : this.requestListeners) {
+			for (final MechRequestListener listener : this.requestListeners) {
 				listener.call(request, response);
 			}
 		}
