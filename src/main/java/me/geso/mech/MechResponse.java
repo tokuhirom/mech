@@ -120,7 +120,7 @@ public class MechResponse implements Closeable {
 				throw new RuntimeException(e);
 			}
 		}
-		return content;
+		return Arrays.copyOf(content, content.length);
 	}
 
 	public MechRequest getRequest() {

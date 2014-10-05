@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -72,6 +73,7 @@ public class MechTest {
 				assertEquals(res.getContentType().getMimeType(), "text/plain");
 				assertEquals(res.getContentType().getCharset().displayName(),
 						"UTF-8");
+				assertThat(res.getContent(), is("heheh".getBytes(StandardCharsets.UTF_8)));
 				assertTrue(res.getContentString().contains("heheh"));
 			}
 		}
