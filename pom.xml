@@ -97,7 +97,10 @@
 					<source>1.8</source>
 					<target>1.8</target>
 					<encoding>UTF-8</encoding>
-					<compilerArgument>-parameters -Werror</compilerArgument>
+					<compilerArguments>
+						<parameters />
+						<Werror />
+					</compilerArguments>
 				</configuration>
 			</plugin>
 		</plugins>
