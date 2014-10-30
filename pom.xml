@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>me.geso</groupId>
 	<artifactId>mech</artifactId>
-	<version>0.11.8-SNAPSHOT</version>
+	<version>0.11.8</version>
 	<name>mech</name>
 	<description>mech</description>
 	<url>http://github.com/tokuhirom/mech</url>
@@ -35,7 +35,7 @@
 		<url>https://github.com/tokuhirom/mech/</url>
 		<connection>scm:git:git://github.com/tokuhirom/mech.git</connection>
 		<developerConnection>scm:git:git@github.com:tokuhirom/mech.git</developerConnection>
-	  <tag>HEAD</tag>
+	  <tag>mech-0.11.8</tag>
   </scm>
 
     <distributionManagement>
@@ -94,7 +94,13 @@
 		<dependency>
 			<groupId>me.geso</groupId>
 			<artifactId>tinyvalidator</artifactId>
-			<version>0.5.0</version>
+			<version>0.6.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>1.14.6</version>
+			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 
