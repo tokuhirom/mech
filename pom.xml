@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>me.geso</groupId>
 	<artifactId>mech</artifactId>
-	<version>0.11.8</version>
+	<version>0.11.9-SNAPSHOT</version>
 	<name>mech</name>
 	<description>mech</description>
 	<url>http://github.com/tokuhirom/mech</url>
@@ -35,7 +35,7 @@
 		<url>https://github.com/tokuhirom/mech/</url>
 		<connection>scm:git:git://github.com/tokuhirom/mech.git</connection>
 		<developerConnection>scm:git:git@github.com:tokuhirom/mech.git</developerConnection>
-	  <tag>mech-0.11.8</tag>
+	  <tag>HEAD</tag>
   </scm>
 
     <distributionManagement>
